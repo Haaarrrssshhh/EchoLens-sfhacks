@@ -21,6 +21,9 @@ let settings = { ...defaultSettings };
 chrome.storage.sync.get('echolensSettings', (data) => {
   if (data.echolensSettings) {
     settings = { ...settings, ...data.echolensSettings };
+  } else {
+    // If no settings exist, save defaults
+    chrome.storage.sync.set({ echolensSettings: settings });
   }
 });
 
@@ -41,22 +44,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
       
     case 'updateSettings':
+      // Update only the settings that were provided
       settings = { ...settings, ...message.settings };
-      // Save settings to storage
-      chrome.storage.sync.set({ echolensSettings: settings });
-      // Notify all tabs about the setting change
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(tab => {
-          chrome.tabs.sendMessage(tab.id, { 
-            action: 'updateSettings',
-            settings
-          }).catch(() => {
-            // Ignore errors from tabs that don't have content script loaded
+      
+      // Save all settings to storage
+      chrome.storage.sync.set({ echolensSettings: settings }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to save settings:', chrome.runtime.lastError);
+          sendResponse({ success: false, error: chrome.runtime.lastError });
+        } else {
+          // Notify all tabs about the setting change
+          chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(tab => {
+              try {
+                chrome.tabs.sendMessage(tab.id, { 
+                  action: 'updateSettings',
+                  settings: message.settings
+                }).catch(() => {
+                  // Ignore errors from tabs that don't have content script loaded
+                });
+              } catch (e) {
+                // Ignore errors for tabs that can't receive messages
+              }
+            });
           });
-        });
+          sendResponse({ success: true });
+        }
       });
-      sendResponse({ success: true });
-      break;
+      return true; // Keep message channel open for async response
       
     case 'getVoices':
       chrome.tts.getVoices((voices) => {
@@ -68,10 +83,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Handle text-to-speech
 function speak(text, options = {}, callback) {
+  if (!text) {
+    if (callback) callback();
+    return;
+  }
+  
   const ttsOptions = {
-    rate: options.rate || settings.speechRate,
-    pitch: options.pitch || settings.speechPitch,
-    voiceName: options.voiceName || settings.voiceName,
+    rate: options.rate || settings.speechRate || 1.0,
+    pitch: options.pitch || settings.speechPitch || 1.0,
+    voiceName: options.voiceName || settings.voiceName || '',
     onEvent: (event) => {
       if (event.type === 'end' || event.type === 'interrupted' || event.type === 'error') {
         if (callback) callback();

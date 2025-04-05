@@ -6,6 +6,8 @@
 const toggleScreenReaderBtn = document.getElementById('toggleScreenReader');
 const readHeadingsBtn = document.getElementById('readHeadings');
 const readLandmarksBtn = document.getElementById('readLandmarks');
+const readParagraphsBtn = document.getElementById('readParagraphs');
+const readImagesBtn = document.getElementById('readImages');
 const stopReadingBtn = document.getElementById('stopReading');
 const openOptionsBtn = document.getElementById('openOptions');
 const helpBtn = document.getElementById('help');
@@ -43,10 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Update UI based on current settings
 function updateUI() {
   highContrastToggle.checked = currentSettings.highContrast;
-  speechRateSlider.value = currentSettings.speechRate;
-  speechRateValue.textContent = currentSettings.speechRate.toFixed(1);
-  fontSizeSlider.value = currentSettings.fontSize;
-  fontSizeValue.textContent = `${currentSettings.fontSize}px`;
+  speechRateSlider.value = currentSettings.speechRate || 1.0;
+  speechRateValue.textContent = (currentSettings.speechRate || 1.0).toFixed(1);
+  fontSizeSlider.value = currentSettings.fontSize || 16;
+  fontSizeValue.textContent = `${currentSettings.fontSize || 16}px`;
 }
 
 // Set up event listeners
@@ -57,11 +59,35 @@ function setupEventListeners() {
   });
 
   readHeadingsBtn.addEventListener('click', () => {
-    sendMessageToActiveTab('readHeadings');
+    // First stop any ongoing reading
+    sendMessageToActiveTab('stopReading');
+    setTimeout(() => {
+      sendMessageToActiveTab('readHeadings');
+    }, 100);
   });
 
   readLandmarksBtn.addEventListener('click', () => {
-    sendMessageToActiveTab('readLandmarks');
+    // First stop any ongoing reading
+    sendMessageToActiveTab('stopReading');
+    setTimeout(() => {
+      sendMessageToActiveTab('readLandmarks');
+    }, 100);
+  });
+
+  readParagraphsBtn.addEventListener('click', () => {
+    // First stop any ongoing reading
+    sendMessageToActiveTab('stopReading');
+    setTimeout(() => {
+      sendMessageToActiveTab('readParagraphs');
+    }, 100);
+  });
+
+  readImagesBtn.addEventListener('click', () => {
+    // First stop any ongoing reading
+    sendMessageToActiveTab('stopReading');
+    setTimeout(() => {
+      sendMessageToActiveTab('readImages');
+    }, 100);
   });
 
   stopReadingBtn.addEventListener('click', () => {
@@ -97,6 +123,14 @@ function setupEventListeners() {
   closeHelpBtn.addEventListener('click', () => {
     helpDialog.close();
   });
+
+  // Add Option/Alt+P keyboard shortcut to the help dialog
+  const helpList = helpDialog.querySelector('ul');
+  if (helpList) {
+    const paragraphItem = document.createElement('li');
+    paragraphItem.innerHTML = '<strong>Alt+P / Option+P</strong> - Read paragraphs';
+    helpList.appendChild(paragraphItem);
+  }
 }
 
 // Send message to the active tab

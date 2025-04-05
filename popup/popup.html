@@ -29,6 +29,16 @@
         Read Landmarks
       </button>
       
+      <button id="readParagraphs" class="btn">
+        <span class="icon">📄</span>
+        Read Paragraphs
+      </button>
+      
+      <button id="readImages" class="btn">
+        <span class="icon">🖼️</span>
+        Read Images
+      </button>
+      
       <button id="stopReading" class="btn">
         <span class="icon">⏹️</span>
         Stop Reading
@@ -48,7 +58,7 @@
       
       <div class="setting">
         <label for="speechRate">Speech Rate</label>
-        <input type="range" id="speechRate" min="0.5" max="2" step="0.1" value="1">
+        <input type="range" id="speechRate" min="0.5" max="4" step="0.1" value="1">
         <span class="value" id="speechRateValue">1.0</span>
       </div>
       
@@ -74,14 +84,18 @@
     <div class="dialog-content">
       <h2>Keyboard Shortcuts</h2>
       <ul>
-        <li><strong>Alt+Shift+A</strong> - Toggle screen reader</li>
+        <li><strong>Option+Shift+A</strong> - Toggle screen reader (Mac)</li>
+        <li><strong>Alt+Shift+A</strong> - Toggle screen reader (Windows/Linux)</li>
         <li><strong>Tab</strong> - Navigate through interactive elements</li>
         <li><strong>Arrow Up/Down</strong> - Navigate with screen reader</li>
         <li><strong>Space/Enter</strong> - Activate focused element</li>
-        <li><strong>Alt+H</strong> - Read headings</li>
-        <li><strong>Alt+L</strong> - Read landmarks</li>
+        <li><strong>Alt+H / Option+H</strong> - Read headings</li>
+        <li><strong>Alt+L / Option+L</strong> - Read landmarks</li>
+        <li><strong>Alt+P / Option+P</strong> - Read paragraphs</li>
+        <li><strong>Alt+I / Option+I</strong> - Read images</li>
         <li><strong>Escape</strong> - Stop reading</li>
       </ul>
+      <p>When screen reader is active, use arrow keys to navigate through all elements, including images and paragraphs.</p>
       <button id="closeHelp" class="btn secondary">Close</button>
     </div>
   </dialog>

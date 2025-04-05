@@ -9,6 +9,7 @@ class EchoLensAccessibility {
     this.currentFocusIndex = -1;
     this.interactiveElements = [];
     this.readingQueue = [];
+    this.isReading = false;
     this.settings = {
       speechRate: 1.0,
       speechPitch: 1.0,
@@ -41,6 +42,8 @@ class EchoLensAccessibility {
   applySettings() {
     if (this.settings.highContrast) {
       this.enableHighContrast();
+    } else {
+      this.disableHighContrast();
     }
     
     if (this.settings.fontSize !== 16) {
@@ -50,23 +53,26 @@ class EchoLensAccessibility {
 
   // Enable high contrast mode
   enableHighContrast() {
-    const style = document.createElement('style');
-    style.id = 'echolens-high-contrast';
-    style.textContent = `
-      body {
-        background-color: #000 !important;
-        color: #fff !important;
-      }
-      a, button, input, select, textarea {
-        background-color: #000 !important;
-        color: #ffff00 !important;
-        border: 1px solid #ffff00 !important;
-      }
-      img {
-        filter: brightness(1.2) contrast(1.2);
-      }
-    `;
-    document.head.appendChild(style);
+    let style = document.getElementById('echolens-high-contrast');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'echolens-high-contrast';
+      style.textContent = `
+        body {
+          background-color: #000 !important;
+          color: #fff !important;
+        }
+        a, button, input, select, textarea {
+          background-color: #000 !important;
+          color: #ffff00 !important;
+          border: 1px solid #ffff00 !important;
+        }
+        img {
+          filter: brightness(1.2) contrast(1.2);
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   // Disable high contrast mode
@@ -82,12 +88,20 @@ class EchoLensAccessibility {
     document.addEventListener('keydown', this.handleKeyDown.bind(this));
   }
 
+  // Check if this is a Mac
+  isMac() {
+    return navigator.platform.indexOf('Mac') > -1;
+  }
+
   // Handle keyboard shortcuts
   handleKeyDown(event) {
     if (!this.settings.enableKeyboardShortcuts) return;
 
-    // Alt+Shift+A to toggle the screen reader
-    if (event.altKey && event.shiftKey && event.key === 'A') {
+    const isMac = this.isMac();
+    const altKey = isMac ? event.metaKey || event.altKey : event.altKey;
+
+    // Alt+Shift+A (or Option+Shift+A on Mac) to toggle the screen reader
+    if (altKey && event.shiftKey && event.key === 'A') {
       event.preventDefault();
       this.toggleScreenReader();
     }
@@ -111,16 +125,28 @@ class EchoLensAccessibility {
         this.activateCurrentElement();
       }
       
-      // Alt+H to read page headings
-      else if (event.altKey && event.key === 'h') {
+      // Alt+H or Option+H to read page headings
+      else if (altKey && (event.key === 'h' || event.key === 'H')) {
         event.preventDefault();
         this.readHeadings();
       }
       
-      // Alt+L to read landmarks
-      else if (event.altKey && event.key === 'l') {
+      // Alt+L or Option+L to read landmarks
+      else if (altKey && (event.key === 'l' || event.key === 'L')) {
         event.preventDefault();
         this.readLandmarks();
+      }
+      
+      // Alt+P or Option+P to read paragraphs
+      else if (altKey && (event.key === 'p' || event.key === 'P')) {
+        event.preventDefault();
+        this.readParagraphs();
+      }
+
+      // Alt+I or Option+I to read images
+      else if (altKey && (event.key === 'i' || event.key === 'I')) {
+        event.preventDefault();
+        this.readImages();
       }
       
       // Escape to stop reading
@@ -146,9 +172,9 @@ class EchoLensAccessibility {
 
   // Scan the page for interactive elements
   scanPageElements() {
-    // Find all interactive elements
+    // Find all interactive elements including paragraphs and images
     this.interactiveElements = Array.from(document.querySelectorAll(
-      'a, button, input, select, textarea, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex]'
+      'a, button, input, select, textarea, p, img, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex]'
     )).filter(el => {
       // Filter out hidden elements
       const style = window.getComputedStyle(el);
@@ -206,6 +232,9 @@ class EchoLensAccessibility {
     focusOutline.style.pointerEvents = 'none';
     focusOutline.style.zIndex = '999999';
     document.body.appendChild(focusOutline);
+    
+    // Scroll the element into view if needed
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
     // Announce the element
     const elementDescription = this.getElementDescription(element);
@@ -266,6 +295,21 @@ class EchoLensAccessibility {
       if (element.value) {
         description += `, contains text`;
       }
+    } else if (tagName === 'p') {
+      const text = name || '';
+      if (text.length > 100) {
+        description = `Paragraph: ${text.substring(0, 100)}... (${text.length} characters)`;
+      } else {
+        description = `Paragraph: ${text}`;
+      }
+    } else if (tagName === 'img') {
+      const alt = element.getAttribute('alt') || 'No alt text provided';
+      const src = element.getAttribute('src') || '';
+      const fileName = src.split('/').pop();
+      description = `Image: ${alt}`;
+      if (alt === 'No alt text provided' && fileName) {
+        description += ` (filename: ${fileName})`;
+      }
     } else {
       description = name;
     }
@@ -304,6 +348,13 @@ class EchoLensAccessibility {
         } else {
           element.focus();
         }
+      } else if (element.tagName.toLowerCase() === 'img') {
+        // For images, just read the description again
+        const description = this.getElementDescription(element);
+        this.announceMessage(description);
+      } else if (element.tagName.toLowerCase() === 'p') {
+        // For paragraphs, read the full content
+        this.announceMessage(`Reading paragraph: ${element.textContent.trim()}`);
       } else {
         // Click the element
         element.click();
@@ -313,13 +364,15 @@ class EchoLensAccessibility {
 
   // Read all headings on the page
   readHeadings() {
+    // First stop any ongoing reading
+    this.stopReading();
+    
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]');
     if (headings.length === 0) {
       this.announceMessage("No headings found");
       return;
     }
     
-    this.stopReading();
     this.readingQueue = Array.from(headings).map(heading => {
       const level = heading.tagName ? parseInt(heading.tagName.charAt(1)) : 
                   heading.getAttribute('aria-level') || 2;
@@ -327,11 +380,39 @@ class EchoLensAccessibility {
     });
     
     this.announceMessage(`${headings.length} headings found`);
+    this.isReading = true;
+    this.processReadingQueue();
+  }
+
+  // Read all paragraphs on the page
+  readParagraphs() {
+    // First stop any ongoing reading
+    this.stopReading();
+    
+    const paragraphs = document.querySelectorAll('p');
+    if (paragraphs.length === 0) {
+      this.announceMessage("No paragraphs found");
+      return;
+    }
+    
+    this.readingQueue = Array.from(paragraphs).map(paragraph => {
+      const text = paragraph.textContent.trim();
+      if (text.length > 200) {
+        return `Paragraph: ${text.substring(0, 200)}... continues`;
+      }
+      return `Paragraph: ${text}`;
+    });
+    
+    this.announceMessage(`${paragraphs.length} paragraphs found`);
+    this.isReading = true;
     this.processReadingQueue();
   }
 
   // Read all landmarks on the page
   readLandmarks() {
+    // First stop any ongoing reading
+    this.stopReading();
+    
     const landmarks = document.querySelectorAll(
       'header, footer, main, nav, aside, section[aria-label], section[aria-labelledby], [role="banner"], [role="contentinfo"], [role="main"], [role="navigation"], [role="complementary"], [role="search"], [role="region"][aria-label], [role="region"][aria-labelledby]'
     );
@@ -341,7 +422,6 @@ class EchoLensAccessibility {
       return;
     }
     
-    this.stopReading();
     this.readingQueue = Array.from(landmarks).map(landmark => {
       let type = landmark.tagName.toLowerCase();
       if (landmark.hasAttribute('role')) {
@@ -361,12 +441,42 @@ class EchoLensAccessibility {
     });
     
     this.announceMessage(`${landmarks.length} landmarks found`);
+    this.isReading = true;
+    this.processReadingQueue();
+  }
+
+  // Read all images on the page
+  readImages() {
+    // First stop any ongoing reading
+    this.stopReading();
+    
+    const images = document.querySelectorAll('img');
+    if (images.length === 0) {
+      this.announceMessage("No images found");
+      return;
+    }
+    
+    this.readingQueue = Array.from(images).map(img => {
+      const alt = img.getAttribute('alt') || 'No alt text provided';
+      const src = img.getAttribute('src') || '';
+      const fileName = src.split('/').pop();
+      
+      let description = `Image: ${alt}`;
+      if (alt === 'No alt text provided' && fileName) {
+        description += ` (filename: ${fileName})`;
+      }
+      
+      return description;
+    });
+    
+    this.announceMessage(`${images.length} images found`);
+    this.isReading = true;
     this.processReadingQueue();
   }
 
   // Process the reading queue
   processReadingQueue() {
-    if (this.readingQueue.length > 0) {
+    if (this.readingQueue.length > 0 && this.isReading) {
       const nextItem = this.readingQueue.shift();
       this.announceMessage(nextItem, () => {
         setTimeout(() => {
@@ -379,6 +489,7 @@ class EchoLensAccessibility {
   // Stop current reading
   stopReading() {
     this.readingQueue = [];
+    this.isReading = false;
     chrome.runtime.sendMessage({ action: 'stopSpeech' });
   }
 
@@ -415,6 +526,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   } else if (message.action === 'stopReading') {
     echoLens.stopReading();
+    sendResponse({ success: true });
+  } else if (message.action === 'readParagraphs') {
+    echoLens.readParagraphs();
+    sendResponse({ success: true });
+  } else if (message.action === 'readImages') {
+    echoLens.readImages();
+    sendResponse({ success: true });
+  } else if (message.action === 'describeImage') {
+    // Handle image description request
+    if (message.imageUrl) {
+      const images = Array.from(document.querySelectorAll('img')).filter(img => 
+        img.src === message.imageUrl || img.currentSrc === message.imageUrl
+      );
+      
+      if (images.length > 0) {
+        const img = images[0];
+        const altText = img.alt || 'No image description available';
+        echoLens.announceMessage(`Image: ${altText}`);
+      }
+    }
     sendResponse({ success: true });
   }
   return true; // Required for async response
