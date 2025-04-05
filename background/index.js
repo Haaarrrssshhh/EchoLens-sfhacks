@@ -65,6 +65,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.tts.stop();
       sendResponse({ success: true });
       break;
+    case 'getSettings':
+      chrome.storage.sync.get(['speechRate', 'highContrast'], (result) => {
+        console.log('Background: Retrieved settings from storage:', result); // Log retrieved settings
+        sendResponse({ settings: result });
+      });
+      return true;
   }
 });
 

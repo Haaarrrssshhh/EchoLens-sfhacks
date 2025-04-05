@@ -99,6 +99,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ success: true });
       break;
       
+    case 'getSettings':
+      sendResponse({ settings });
+      break;
+      
     case 'updateSettings':
       if (message.settings) {
         // Update local copy

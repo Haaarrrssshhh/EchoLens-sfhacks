@@ -35,23 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     getCurrentTab().then(tab => {
-      chrome.tabs.sendMessage(tab.id, { action: 'getFontSize' }, function(response) {
-        if (response && response.fontSize) {
-          document.getElementById('font-size').value = response.fontSize;
-          document.getElementById('size-value').textContent = response.fontSize + 'px';
-        } else {
-          const defaultSize = 16;
-          document.getElementById('font-size').value = defaultSize;
-          document.getElementById('size-value').textContent = defaultSize + 'px';
-        }
-      });
-
       chrome.tabs.sendMessage(tab.id, { action: 'getScreenReaderState' }, function(response) {
-        if (chrome.runtime.lastError) {
-          console.warn("Could not get screen reader state:", chrome.runtime.lastError.message);
-          isScreenReaderActive = false;
-          updateToggleButton();
-        } else if (response && response.isActive !== undefined) {
+        if (response && response.isActive !== undefined) {
           isScreenReaderActive = response.isActive;
           updateToggleButton();
         }
