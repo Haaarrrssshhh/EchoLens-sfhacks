@@ -27,5 +27,6 @@ export default defineConfig({
         { src: 'options', dest: '.' }
       ]
     })
-  ]
+  ],
+  envPrefix: 'VITE_'
 });
