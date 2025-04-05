@@ -39,16 +39,24 @@ class EchoLensAccessibility {
 
   // Initialize with stored settings or defaults
   async initializeSettings() {
-    try {
-      // Request settings from background script
-      chrome.runtime.sendMessage({ action: 'getSettings' }, (response) => {
-        if (response && response.settings) {
-          this.settings = { ...this.settings, ...response.settings };
-          this.applySettings();
+      const syncedSettingsKeys = ['speechRate', 'highContrast', 'speechPitch', 'focusColor', 'enableKeyboardShortcuts'];
+      chrome.storage.sync.get(syncedSettingsKeys, (result) => {
+        if (chrome.runtime.lastError) {
+          console.error("Error getting settings from storage:", chrome.runtime.lastError.message);
+        } else {
+          this.settings.speechRate = result.speechRate !== undefined ? result.speechRate : 1.0;
+          this.settings.highContrast = result.highContrast !== undefined ? result.highContrast : false;
+          this.settings.speechPitch = result.speechPitch !== undefined ? result.speechPitch : 1.0;
+          this.settings.focusColor = result.focusColor || '#FF4081';
+          this.settings.enableKeyboardShortcuts = result.enableKeyboardShortcuts !== undefined ? result.enableKeyboardShortcuts : true;
+          console.log('Initialized settings from storage:', this.settings);
         }
+
+        this.applySettings();
       });
     } catch (error) {
       console.error('Failed to initialize settings:', error);
+      this.applySettings();
     }
   }
 
@@ -807,11 +815,12 @@ class EchoLensAccessibility {
   // Announce a message using text-to-speech
   announceMessage(message, callback) {
     console.log("Announcing:", message);
+    // Ensure we use the *current* speech rate from settings
     chrome.runtime.sendMessage({
       action: 'speak',
       text: message,
       options: {
-        rate: this.settings.speechRate,
+        rate: this.settings.speechRate, // Read current rate here
         pitch: this.settings.speechPitch
       }
     }, callback);
@@ -827,8 +836,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     echoLens.toggleScreenReader();
     sendResponse({ success: true });
   } else if (message.action === 'updateSettings') {
-    echoLens.settings = { ...echoLens.settings, ...message.settings };
-    echoLens.applySettings();
+    // Handle settings updates specifically for this tab (e.g., font size)
+    if (message.settings && message.settings.fontSize !== undefined) {
+      echoLens.settings.fontSize = message.settings.fontSize;
+      echoLens.applyFontSize(echoLens.settings.fontSize);
+    }
+    // We could potentially handle other tab-specific settings here
     sendResponse({ success: true });
   } else if (message.action === 'readHeadings') {
     echoLens.readHeadings();
@@ -847,6 +860,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   } else if (message.action === 'getScreenReaderState') {
     sendResponse({ isActive: echoLens.isActive });
+  } else if (message.action === 'getFontSize') {
+    // Respond with the current font size for this tab
+    sendResponse({ fontSize: echoLens.settings.fontSize });
   } else if (message.action === 'describeImage') {
     // Handle image description request
     if (message.imageUrl) {
@@ -863,4 +879,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   }
   return true; // Required for async response
+});
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync') {
+    let settingsChanged = false;
+    if (changes.speechRate) {
+      echoLens.settings.speechRate = changes.speechRate.newValue;
+      console.log('Speech rate updated to:', echoLens.settings.speechRate);
+      settingsChanged = true;
+    }
+    if (changes.highContrast) {
+      echoLens.settings.highContrast = changes.highContrast.newValue;
+      console.log('High contrast updated to:', echoLens.settings.highContrast);
+      settingsChanged = true;
+    }
+    if (changes.fontSize) {
+      echoLens.settings.fontSize = changes.fontSize.newValue;
+      console.log('Font size updated to:', echoLens.settings.fontSize);
+      settingsChanged = true;
+    }
+
+    if (settingsChanged) {
+      if (changes.highContrast) {
+         echoLens.applySettings();
+      }
+    }
+  }
 });

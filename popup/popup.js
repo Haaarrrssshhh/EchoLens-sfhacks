@@ -21,18 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
     return tab;
   };
   
-  // Load settings
-  chrome.storage.sync.get(['speechRate', 'highContrast', 'fontSize'], function(result) {
+  chrome.storage.sync.get(['speechRate', 'highContrast'], function(result) {
     // Set speech rate slider value if available
     if (result.speechRate) {
       document.getElementById('speech-rate').value = result.speechRate;
       document.getElementById('rate-value').textContent = result.speechRate + 'x';
-    }
-    
-    // Set font size slider value if available
-    if (result.fontSize) {
-      document.getElementById('font-size').value = result.fontSize;
-      document.getElementById('size-value').textContent = result.fontSize + 'px';
     }
     
     // Set high contrast toggle if available
@@ -41,10 +34,24 @@ document.addEventListener('DOMContentLoaded', function() {
       updateHighContrastButton();
     }
     
-    // Check the current screen reader state
     getCurrentTab().then(tab => {
+      chrome.tabs.sendMessage(tab.id, { action: 'getFontSize' }, function(response) {
+        if (response && response.fontSize) {
+          document.getElementById('font-size').value = response.fontSize;
+          document.getElementById('size-value').textContent = response.fontSize + 'px';
+        } else {
+          const defaultSize = 16;
+          document.getElementById('font-size').value = defaultSize;
+          document.getElementById('size-value').textContent = defaultSize + 'px';
+        }
+      });
+
       chrome.tabs.sendMessage(tab.id, { action: 'getScreenReaderState' }, function(response) {
-        if (response && response.isActive !== undefined) {
+        if (chrome.runtime.lastError) {
+          console.warn("Could not get screen reader state:", chrome.runtime.lastError.message);
+          isScreenReaderActive = false;
+          updateToggleButton();
+        } else if (response && response.isActive !== undefined) {
           isScreenReaderActive = response.isActive;
           updateToggleButton();
         }
@@ -119,14 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.sync.set({ highContrast: isHighContrast });
     
     updateHighContrastButton();
-    
-    // Apply high contrast setting to the current tab
-    getCurrentTab().then(tab => {
-      chrome.tabs.sendMessage(tab.id, { 
-        action: 'updateSettings', 
-        settings: { highContrast: isHighContrast }
-      });
-    });
   });
   
   // Additional event listener for the high contrast button itself
@@ -144,23 +143,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const rate = parseFloat(this.value);
     document.getElementById('rate-value').textContent = rate + 'x';
     chrome.storage.sync.set({ speechRate: rate });
-    
-    // Apply speech rate setting to the current tab
-    getCurrentTab().then(tab => {
-      chrome.tabs.sendMessage(tab.id, { 
-        action: 'updateSettings', 
-        settings: { speechRate: rate }
-      });
-    });
   });
   
   // Font size slider event
   document.getElementById('font-size').addEventListener('input', function() {
     const size = parseInt(this.value);
     document.getElementById('size-value').textContent = size + 'px';
-    chrome.storage.sync.set({ fontSize: size });
     
-    // Apply font size setting to the current tab
     getCurrentTab().then(tab => {
       chrome.tabs.sendMessage(tab.id, { 
         action: 'updateSettings', 
