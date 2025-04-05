@@ -705,7 +705,7 @@ class EchoLensAccessibility {
 
     this.readingQueue = Array.from(paragraphs).map(paragraph => {
       const text = paragraph.textContent.trim();
-      return `Paragraph: ${text}`;
+      return text;
     });
 
     this.announceMessage(`${paragraphs.length} paragraphs found`);
