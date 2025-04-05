@@ -22,6 +22,7 @@ export default defineConfig({
         { src: 'content-scripts', dest: '.' },
         { src: 'styles', dest: '.' },
         { src: 'images', dest: '.' },
+        { src: 'icons', dest: '.' },
         { src: 'popup', dest: '.' },
         { src: 'options', dest: '.' }
       ]
