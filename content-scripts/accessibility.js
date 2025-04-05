@@ -232,11 +232,48 @@ class EchoLensAccessibility {
   scanPageElements() {
     // Find all interactive elements including paragraphs and images
     const allElements = Array.from(document.querySelectorAll(
-      'a, button, input, select, textarea, p, img, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex], iframe, div'
+      'a, button, input, select, textarea, p, img, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex], iframe, h1, h2, h3, h4, h5, h6'
     ));
     
+    // Add meaningful divs that have direct text content
+    const divs = Array.from(document.querySelectorAll('div'));
+    const meaningfulDivs = divs.filter(div => {
+      // Check if div has direct text content that's not just whitespace
+      let hasDirectText = false;
+      
+      // Check direct childNodes for text nodes with content
+      for (let i = 0; i < div.childNodes.length; i++) {
+        const node = div.childNodes[i];
+        // Check if it's a text node with non-whitespace content
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+          hasDirectText = true;
+          break;
+        }
+      }
+      
+      // Skip container divs that only have other elements as children
+      if (!hasDirectText) {
+        return false;
+      }
+      
+      // Check if visible
+      const style = window.getComputedStyle(div);
+      const isVisible = style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       style.opacity !== '0' &&
+                       div.offsetParent !== null;
+      
+      // Additional check for zero-sized elements
+      const hasSize = div.offsetWidth > 0 && div.offsetHeight > 0;
+      
+      return isVisible && hasSize;
+    });
+    
+    // Combine all elements
+    const combinedElements = [...allElements, ...meaningfulDivs];
+    
     // Filter out hidden elements and those within iframes (since we can't access them)
-    this.interactiveElements = allElements.filter(el => {
+    this.interactiveElements = combinedElements.filter(el => {
       // Skip elements without visible content
       if (el.tagName.toLowerCase() !== 'img' && 
           el.textContent.trim() === '' && 
@@ -259,8 +296,182 @@ class EchoLensAccessibility {
       // Additional check for zero-sized elements
       const hasSize = el.offsetWidth > 0 && el.offsetHeight > 0;
       
+      // Don't include elements that are just containers for other elements
+      // (unless they're designated as interactive elements like buttons)
+      if (el.tagName.toLowerCase() === 'div') {
+        // We already filtered divs separately above
+        return true;
+      }
+      
       return isVisible && hasSize;
     });
+    
+    // Sort elements based on their visual position in the document
+    this.sortElementsByPosition();
+  }
+
+  // Sort elements by their visual position in the document
+  sortElementsByPosition() {
+    // Get the document dimensions for reference
+    const docWidth = document.documentElement.clientWidth;
+    
+    // Define logical "rows" of elements
+    const rows = [];
+    const processedElements = new Set();
+    
+    // First sort roughly by vertical position
+    const sortedByTop = [...this.interactiveElements].sort((a, b) => {
+      return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+    });
+    
+    // Group elements into rows
+    sortedByTop.forEach(element => {
+      if (processedElements.has(element)) {
+        return;
+      }
+      
+      const rect = element.getBoundingClientRect();
+      
+      // Find existing row that this element could belong to
+      let foundRow = false;
+      for (const row of rows) {
+        // Check if the element is in the vertical range of this row
+        // Use a smaller threshold (10px) for greater accuracy
+        const rowTop = row.top;
+        const rowBottom = row.bottom;
+        
+        if (
+          (rect.top >= rowTop - 10 && rect.top <= rowBottom + 10) ||
+          (rect.bottom >= rowTop - 10 && rect.bottom <= rowBottom + 10) ||
+          (rect.top <= rowTop && rect.bottom >= rowBottom)
+        ) {
+          row.elements.push(element);
+          
+          // Update row boundaries if necessary
+          if (rect.top < row.top) row.top = rect.top;
+          if (rect.bottom > row.bottom) row.bottom = rect.bottom;
+          
+          processedElements.add(element);
+          foundRow = true;
+          break;
+        }
+      }
+      
+      // If no existing row fits, create a new one
+      if (!foundRow) {
+        rows.push({
+          top: rect.top,
+          bottom: rect.bottom,
+          elements: [element]
+        });
+        processedElements.add(element);
+      }
+    });
+    
+    // Sort each row's elements from left to right
+    rows.forEach(row => {
+      row.elements.sort((a, b) => {
+        return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+      });
+    });
+    
+    // Ensure rows are sorted from top to bottom
+    rows.sort((a, b) => a.top - b.top);
+    
+    // Flatten the sorted rows back into a single array
+    this.interactiveElements = rows.flatMap(row => row.elements);
+    
+    // Post-processing to handle special cases
+    this.handleSpecialCases();
+  }
+  
+  // Handle special cases like tables, multi-column layouts, etc.
+  handleSpecialCases() {
+    // Check for tables and ensure cells are navigated in the right order
+    const tables = document.querySelectorAll('table');
+    if (tables.length > 0) {
+      // Find table elements in our interactive elements
+      const tableElements = this.interactiveElements.filter(el => {
+        let parent = el;
+        while (parent) {
+          if (parent.tagName && parent.tagName.toLowerCase() === 'table') {
+            return true;
+          }
+          parent = parent.parentElement;
+        }
+        return false;
+      });
+      
+      if (tableElements.length > 0) {
+        // Re-sort table elements by their row and column position
+        tableElements.sort((a, b) => {
+          const aRow = this.getTableRowIndex(a);
+          const bRow = this.getTableRowIndex(b);
+          
+          if (aRow !== bRow) {
+            return aRow - bRow;
+          }
+          
+          const aCol = this.getTableColumnIndex(a);
+          const bCol = this.getTableColumnIndex(b);
+          return aCol - bCol;
+        });
+        
+        // Replace the original table elements with the sorted ones
+        this.interactiveElements = this.interactiveElements.filter(el => {
+          let parent = el;
+          while (parent) {
+            if (parent.tagName && parent.tagName.toLowerCase() === 'table') {
+              return false;
+            }
+            parent = parent.parentElement;
+          }
+          return true;
+        }).concat(tableElements);
+      }
+    }
+  }
+  
+  // Helper to get the row index of a table cell
+  getTableRowIndex(element) {
+    let current = element;
+    while (current && current.tagName.toLowerCase() !== 'tr') {
+      current = current.parentElement;
+    }
+    
+    if (!current) return 0;
+    
+    const table = current.closest('table');
+    if (!table) return 0;
+    
+    const rows = table.querySelectorAll('tr');
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i] === current) {
+        return i;
+      }
+    }
+    return 0;
+  }
+  
+  // Helper to get the column index of a table cell
+  getTableColumnIndex(element) {
+    let current = element;
+    while (current && current.tagName.toLowerCase() !== 'td' && current.tagName.toLowerCase() !== 'th') {
+      current = current.parentElement;
+    }
+    
+    if (!current) return 0;
+    
+    const row = current.closest('tr');
+    if (!row) return 0;
+    
+    const cells = row.querySelectorAll('td, th');
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i] === current) {
+        return i;
+      }
+    }
+    return 0;
   }
 
   // Navigate to the next interactive element
@@ -381,12 +592,9 @@ class EchoLensAccessibility {
         description += `, contains text`;
       }
     } else if (tagName === 'p') {
+      // For paragraphs, provide a complete description without truncation
       const text = name || '';
-      if (text.length > 100) {
-        description = `Paragraph: ${text.substring(0, 100)}... (${text.length} characters)`;
-      } else {
-        description = `Paragraph: ${text}`;
-      }
+      description = `Paragraph: ${text}`;
     } else if (tagName === 'img') {
       const alt = element.getAttribute('alt') || 'No alt text provided';
       const src = element.getAttribute('src') || '';
@@ -402,14 +610,14 @@ class EchoLensAccessibility {
       }
     } else if (tagName === 'div') {
       if (name && name.length > 0) {
-        if (name.length > 100) {
-          description = `Content: ${name.substring(0, 100)}... (${name.length} characters)`;
-        } else {
-          description = `Content: ${name}`;
-        }
+        description = `Content: ${name}`;
       } else {
         description = 'Content container';
       }
+    } else if (tagName.match(/^h[1-6]$/)) {
+      // Handle heading elements (h1-h6)
+      const level = tagName.charAt(1);
+      description = `Heading level ${level}: ${name}`;
     } else {
       description = name;
     }
