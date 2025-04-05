@@ -6,7 +6,7 @@ async function getTextTranscript(textContent, targetLanguage = 'English') {
   try {
     console.log(`Sending text to Gemini for translation to ${targetLanguage}:`, textContent);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `Translate the following text into ${targetLanguage}. Also, provide a concise transcription suitable for a blind user, focusing on essential information. Return ONLY the translated text.`;
 
@@ -60,17 +60,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'transcribeImage':
       chrome.storage.sync.get('targetLanguage', (data) => {
         const lang = data.targetLanguage || 'English';
+        console.log('lang', lang);
         getImageTranscript(message.imageUrl, message.altText, lang).then(transcript => sendResponse({ transcript }));
       });
       return true;
     case 'speak':
       chrome.storage.sync.get('targetLanguage', (data) => {
-
-        console.log('Background: Received message to speak:', message);
         const lang = data.targetLanguage || 'English';
-        speak(message.textContent, message.options, sendResponse, lang);
-        //speak(message.textContent, lang).then(transcript => sendResponse({ transcript }));
-      });
+        speak(message.text, message.options, sendResponse, lang);
+      })
       return true;
     case 'stopSpeech':
       chrome.tts.stop();
@@ -85,17 +83,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-function speak(text, options = {}, callback, lang = 'en-US') {
+// function speak(text, options = {}, callback, lang) {
+//   if (!text) {
+//     if (callback) callback();
+//     return;
+//   }
+
+//   const ttsOptions = {
+//     rate: options.rate || 1.0,
+//     pitch: options.pitch || 1.0,
+//     voiceName: `Google ${lang} Male` || '',
+//     onEvent: (event) => {
+//       if (['end', 'interrupted', 'error'].includes(event.type)) {
+//         if (callback) callback();
+//       }
+//     }
+//   };
+
+//   chrome.tts.speak(text, ttsOptions);
+// }
+function speak(text, options = {}, callback, lang = "English") {
   if (!text) {
     if (callback) callback();
     return;
   }
 
+  // Language to langCode and voiceName map
+  const languageMap = {
+    English: { langCode: "en-US", voiceName: "Google US English" },
+    Hindi: { langCode: "hi-IN", voiceName: "Google हिन्दी" },
+    Chinese: { langCode: "zh-CN", voiceName: "Google 中文（普通话）" },
+    French: { langCode: "fr-FR", voiceName: "Google français" },
+    Spanish: { langCode: "es-ES", voiceName: "Google español" }
+  };
+
+  const selected = languageMap[lang] || languageMap["English"];
+
   const ttsOptions = {
+    lang: selected.langCode,
+    voiceName: selected.voiceName,
     rate: options.rate || 1.0,
     pitch: options.pitch || 1.0,
-    voiceName: `Google ${lang} Male` || '',
-    onEvent: (event) => {
+    volume: options.volume || 1.0,
+    onEvent: function (event) {
       if (['end', 'interrupted', 'error'].includes(event.type)) {
         if (callback) callback();
       }
