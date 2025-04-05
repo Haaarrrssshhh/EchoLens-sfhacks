@@ -23,8 +23,7 @@ export default defineConfig({
         { src: 'styles', dest: '.' },
         { src: 'images', dest: '.' },
         { src: 'icons', dest: '.' },
-        { src: 'popup', dest: '.' },
-        { src: 'options', dest: '.' }
+        { src: 'popup', dest: '.' }
       ]
     })
   ],
