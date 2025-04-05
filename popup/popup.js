@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return tab;
   };
   
-  chrome.storage.sync.get(['speechRate', 'highContrast'], function(result) {
+  chrome.storage.sync.get(['speechRate', 'highContrast', 'targetLanguage'], function(result) {
     // Set speech rate slider value if available
     if (result.speechRate) {
       document.getElementById('speech-rate').value = result.speechRate;
@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (result.highContrast) {
       document.getElementById('high-contrast').checked = result.highContrast;
       updateHighContrastButton();
+    }
+
+    const languageSelect = document.getElementById('language-select');
+    if (result.targetLanguage) {
+      languageSelect.value = result.targetLanguage;
+    } else {
+      languageSelect.value = 'English';
     }
     
     getCurrentTab().then(tab => {
@@ -147,5 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('shortcuts-info').addEventListener('click', function() {
     const shortcutsList = document.getElementById('shortcuts-list');
     shortcutsList.classList.toggle('hidden');
+  });
+
+  document.getElementById('language-select').addEventListener('change', function() {
+    const selectedLanguage = this.value;
+    chrome.storage.sync.set({ targetLanguage: selectedLanguage }, () => {
+      console.log('Language preference saved:', selectedLanguage);
+    });
   });
 }); 

@@ -2,14 +2,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-async function getTextTranscript(textContent, targetLanguage = 'Spanish') {
+async function getTextTranscript(textContent, targetLanguage = 'English') {
   try {
-    console.log("Sending text to Gemini:", textContent); // 🔍 DEBUG
+    console.log(`Sending text to Gemini for translation to ${targetLanguage}:`, textContent);
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const prompt = `Translate the text into ${targetLanguage} and Transcribe the text concisely for a blind user, 
-    focusing on essential information. Return only the translated text.`;
+    const prompt = `Translate the following text into ${targetLanguage}. Also, provide a concise transcription suitable for a blind user, focusing on essential information. Return ONLY the translated text.`;
 
     const result = await model.generateContent([prompt, textContent]);
 
@@ -24,7 +23,7 @@ async function getTextTranscript(textContent, targetLanguage = 'Spanish') {
 }
 
 
-async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'Spanish') {
+async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'English') {
   try {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
@@ -39,8 +38,8 @@ async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'Span
       }
     };
 
-    const prompt = `Describe this image into ${targetLanguage} and concisely for a blind user, focusing on the key elements that convey its primary meaning or purpose.  Omit unnecessary details or subjective interpretations.  Prioritize information that would be most helpful for understanding the image's context and relevance.`;
-    const contentPrompt = `Alt text: ${altText}`;
+    const prompt = `Describe this image concisely in ${targetLanguage} for a blind user, focusing on the key elements that convey its primary meaning or purpose. Omit unnecessary details or subjective interpretations. Prioritize information that would be most helpful for understanding the image's context and relevance. Return ONLY the description in ${targetLanguage}.`;
+    const contentPrompt = `Alt text (if any): ${altText || 'None'}`;
 
     const result = await model.generateContent([prompt, contentPrompt, imagePart]);
     return result.response.text();
@@ -53,10 +52,16 @@ async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'Span
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
     case 'transcribeText':
-      getTextTranscript(message.textContent).then(transcript => sendResponse({ transcript }));
+      chrome.storage.sync.get('targetLanguage', (data) => {
+        const lang = data.targetLanguage || 'English';
+        getTextTranscript(message.textContent, lang).then(transcript => sendResponse({ transcript }));
+      });
       return true;
     case 'transcribeImage':
-      getImageTranscript(message.imageUrl, message.altText).then(transcript => sendResponse({ transcript }));
+      chrome.storage.sync.get('targetLanguage', (data) => {
+        const lang = data.targetLanguage || 'English';
+        getImageTranscript(message.imageUrl, message.altText, lang).then(transcript => sendResponse({ transcript }));
+      });
       return true;
     case 'speak':
       speak(message.text, message.options, sendResponse);
