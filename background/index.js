@@ -8,7 +8,7 @@ async function getTextTranscript(textContent) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const prompt = "Transcribe the following text for a blind user.";
+    const prompt = "Transcribe the following text concisely for a blind user, focusing on essential information. Ensure clear pronunciation and appropriate pauses for punctuation. Indicate any formatting changes, such as headings, lists, or emphasis.";
     const result = await model.generateContent([prompt, textContent]);
 
     const transcript = await result.response.text();
@@ -37,7 +37,7 @@ async function getImageTranscript(imageUrl, altText = '') {
       }
     };
 
-    const prompt = "Describe this image for a blind user.";
+    const prompt = "Describe this image concisely for a blind user, focusing on the key elements that convey its primary meaning or purpose.  Omit unnecessary details or subjective interpretations.  Prioritize information that would be most helpful for understanding the image's context and relevance.";
     const contentPrompt = `Alt text: ${altText}`;
 
     const result = await model.generateContent([prompt, contentPrompt, imagePart]);
