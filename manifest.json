@@ -63,9 +63,6 @@
       "description": "Read All Text"
     },
     "stop_reading": {
-      "suggested_key": {
-        "default": "Escape"
-      },
       "description": "Stop Reading"
     }
   }
