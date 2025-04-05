@@ -1,0 +1,98 @@
+/**
+ * EchoLens - Accessibility Styles
+ */
+
+/* Focus indicator styles */
+.echolens-focus-indicator {
+  position: absolute;
+  pointer-events: none;
+  z-index: 999999;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  animation: echolens-pulse 2s infinite;
+}
+
+@keyframes echolens-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 64, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 64, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 64, 129, 0);
+  }
+}
+
+/* High contrast mode (applied via JavaScript) */
+.echolens-high-contrast {
+  filter: invert(100%) hue-rotate(180deg) !important;
+}
+
+/* Skip link for keyboard users */
+.echolens-skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #ff4081;
+  color: white;
+  padding: 8px;
+  z-index: 100000;
+  transition: top 0.3s;
+}
+
+.echolens-skip-link:focus {
+  top: 0;
+}
+
+/* Accessibility tooltip */
+.echolens-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  z-index: 999999;
+  max-width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Improve visibility of form elements */
+.echolens-enhanced-forms input:focus,
+.echolens-enhanced-forms select:focus,
+.echolens-enhanced-forms textarea:focus,
+.echolens-enhanced-forms button:focus {
+  outline: 3px solid #ff4081 !important;
+  outline-offset: 2px !important;
+}
+
+/* Improved visibility for links */
+.echolens-enhance-links a {
+  text-decoration: underline !important;
+}
+
+.echolens-enhance-links a:focus {
+  outline: 3px solid #ff4081 !important;
+  outline-offset: 2px !important;
+}
+
+/* Increase text spacing for better readability */
+.echolens-increase-spacing {
+  line-height: 1.5 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.16em !important;
+}
+
+/* Image alt text overlay */
+.echolens-image-alt {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  z-index: 9999;
+  max-width: 300px;
+  pointer-events: none;
+} 
