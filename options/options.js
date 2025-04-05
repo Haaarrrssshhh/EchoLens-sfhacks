@@ -19,13 +19,16 @@ const speechRateValue = document.getElementById('speechRateValue');
 const speechPitchSlider = document.getElementById('speechPitch');
 const speechPitchValue = document.getElementById('speechPitchValue');
 const voiceSelector = document.getElementById('voiceSelector');
-const highContrastToggle = document.getElementById('highContrast');
+const highContrastCheckbox = document.getElementById('highContrast');
+const highContrastBtn = document.getElementById('highContrastBtn');
 const fontSizeSlider = document.getElementById('fontSize');
 const fontSizeValue = document.getElementById('fontSizeValue');
 const focusColorPicker = document.getElementById('focusColor');
-const enableKeyboardShortcutsToggle = document.getElementById('enableKeyboardShortcuts');
-const restoreDefaultsBtn = document.getElementById('restoreDefaults');
+const focusColorPreview = document.getElementById('focusColorPreview');
+const enableKeyboardShortcutsCheckbox = document.getElementById('enableKeyboardShortcuts');
+const keyboardShortcutsBtn = document.getElementById('keyboardShortcutsBtn');
 const saveSettingsBtn = document.getElementById('saveSettings');
+const restoreDefaultsBtn = document.getElementById('restoreDefaults');
 
 // Current settings
 let currentSettings = { ...defaultSettings };
@@ -89,14 +92,17 @@ function updateUI() {
     voiceSelector.value = currentSettings.voiceName;
   }
   
-  highContrastToggle.checked = currentSettings.highContrast;
+  highContrastCheckbox.checked = currentSettings.highContrast;
+  updateToggleButton(highContrastBtn, currentSettings.highContrast, 'HIGH CONTRAST');
   
   fontSizeSlider.value = currentSettings.fontSize;
   fontSizeValue.textContent = `${currentSettings.fontSize}px`;
   
   focusColorPicker.value = currentSettings.focusColor;
+  updateColorPreview(currentSettings.focusColor);
   
-  enableKeyboardShortcutsToggle.checked = currentSettings.enableKeyboardShortcuts;
+  enableKeyboardShortcutsCheckbox.checked = currentSettings.enableKeyboardShortcuts;
+  updateToggleButton(keyboardShortcutsBtn, currentSettings.enableKeyboardShortcuts, 'SHORTCUTS');
 }
 
 // Set up event listeners
@@ -119,8 +125,9 @@ function setupEventListeners() {
   });
   
   // Visual settings
-  highContrastToggle.addEventListener('change', () => {
-    currentSettings.highContrast = highContrastToggle.checked;
+  highContrastBtn.addEventListener('click', () => {
+    currentSettings.highContrast = !currentSettings.highContrast;
+    updateToggleButton(highContrastBtn, currentSettings.highContrast, 'HIGH CONTRAST');
   });
   
   fontSizeSlider.addEventListener('input', () => {
@@ -129,13 +136,15 @@ function setupEventListeners() {
     currentSettings.fontSize = value;
   });
   
-  focusColorPicker.addEventListener('change', () => {
+  focusColorPicker.addEventListener('input', () => {
     currentSettings.focusColor = focusColorPicker.value;
+    updateColorPreview(currentSettings.focusColor);
   });
   
   // Keyboard settings
-  enableKeyboardShortcutsToggle.addEventListener('change', () => {
-    currentSettings.enableKeyboardShortcuts = enableKeyboardShortcutsToggle.checked;
+  keyboardShortcutsBtn.addEventListener('click', () => {
+    currentSettings.enableKeyboardShortcuts = !currentSettings.enableKeyboardShortcuts;
+    updateToggleButton(keyboardShortcutsBtn, currentSettings.enableKeyboardShortcuts, 'SHORTCUTS');
   });
   
   // Buttons
@@ -193,4 +202,22 @@ function showNotification(message) {
   setTimeout(() => {
     notification.classList.remove('show');
   }, 3000);
+}
+
+// Update toggle button appearance
+function updateToggleButton(button, isActive, label) {
+  if (isActive) {
+    button.classList.add('active');
+    button.style.backgroundColor = '#4CAF50'; // Success color
+    button.textContent = `${label}: ON`;
+  } else {
+    button.classList.remove('active');
+    button.style.backgroundColor = '#F44336'; // Error color
+    button.textContent = `${label}: OFF`;
+  }
+}
+
+// Update color preview
+function updateColorPreview(color) {
+  focusColorPreview.style.backgroundColor = color;
 } 

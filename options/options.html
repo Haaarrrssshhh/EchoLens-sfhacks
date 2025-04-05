@@ -50,9 +50,9 @@
         <div class="setting-group">
           <div class="setting">
             <label for="highContrast">High Contrast Mode</label>
-            <div class="toggle">
-              <input type="checkbox" id="highContrast">
-              <span class="slider"></span>
+            <div class="toggle-wrapper">
+              <input type="checkbox" id="highContrast" class="hidden-checkbox">
+              <button id="highContrastBtn" class="toggle-btn">HIGH CONTRAST: OFF</button>
             </div>
           </div>
           
@@ -62,11 +62,18 @@
               <input type="range" id="fontSize" min="12" max="32" step="2" value="16">
               <span class="value" id="fontSizeValue">16px</span>
             </div>
+            <div class="setting-info">
+              <span class="info-icon">ℹ️</span>
+              <span class="tooltip">Increases text size across webpages for better readability</span>
+            </div>
           </div>
           
           <div class="setting">
             <label for="focusColor">Focus Highlight Color</label>
-            <input type="color" id="focusColor" value="#FF4081">
+            <div class="color-select-wrapper">
+              <input type="color" id="focusColor" value="#FF4081">
+              <span class="color-preview" id="focusColorPreview"></span>
+            </div>
           </div>
         </div>
       </section>
@@ -77,34 +84,40 @@
         <div class="setting-group">
           <div class="setting">
             <label for="enableKeyboardShortcuts">Enable Keyboard Shortcuts</label>
-            <div class="toggle">
-              <input type="checkbox" id="enableKeyboardShortcuts" checked>
-              <span class="slider"></span>
+            <div class="toggle-wrapper">
+              <input type="checkbox" id="enableKeyboardShortcuts" class="hidden-checkbox" checked>
+              <button id="keyboardShortcutsBtn" class="toggle-btn">SHORTCUTS: ON</button>
             </div>
           </div>
           
           <div class="keyboard-shortcuts">
             <h3>Current Keyboard Shortcuts</h3>
-            <ul>
-              <li><strong>Option+Shift+A</strong> - Toggle screen reader (Mac)</li>
-              <li><strong>Alt+Shift+A</strong> - Toggle screen reader (Windows/Linux)</li>
-              <li><strong>Tab</strong> - Navigate through interactive elements</li>
-              <li><strong>Arrow Up/Down</strong> - Navigate with screen reader</li>
-              <li><strong>Space/Enter</strong> - Activate focused element</li>
-              <li><strong>Alt+H / Option+H</strong> - Read headings</li>
-              <li><strong>Alt+L / Option+L</strong> - Read landmarks</li>
-              <li><strong>Alt+P / Option+P</strong> - Read paragraphs</li>
-              <li><strong>Alt+I / Option+I</strong> - Read images</li>
-              <li><strong>Escape</strong> - Stop reading</li>
+            <ul class="shortcuts-list">
+              <li><span class="shortcut-key">Alt+Shift+A</span>Toggle screen reader</li>
+              <li><span class="shortcut-key">Arrow Up/Down</span>Navigate with screen reader</li>
+              <li><span class="shortcut-key">Space/Enter</span>Activate focused element</li>
+              <li><span class="shortcut-key">Alt+H</span>Read headings</li>
+              <li><span class="shortcut-key">Alt+G</span>Read all text</li>
+              <li><span class="shortcut-key">Alt+L</span>Read landmarks</li>
+              <li><span class="shortcut-key">Alt+P</span>Read paragraphs</li>
+              <li><span class="shortcut-key">Alt+I</span>Read images</li>
+              <li><span class="shortcut-key">Escape</span>Stop reading</li>
             </ul>
+            <div class="shortcut-note">
+              <p>Note: On Mac, use Option instead of Alt</p>
+            </div>
           </div>
         </div>
       </section>
     </main>
     
     <footer>
-      <button id="restoreDefaults" class="btn secondary">Restore Defaults</button>
-      <button id="saveSettings" class="btn primary">Save Settings</button>
+      <button id="restoreDefaults" class="btn secondary">
+        <span class="btn-icon">↺</span>Restore Defaults
+      </button>
+      <button id="saveSettings" class="btn primary">
+        <span class="btn-icon">💾</span>Save Settings
+      </button>
     </footer>
   </div>
   
