@@ -64,7 +64,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
     case 'speak':
-      speak(message.text, message.options, sendResponse);
+      chrome.storage.sync.get('targetLanguage', (data) => {
+
+        console.log('Background: Received message to speak:', message);
+        const lang = data.targetLanguage || 'English';
+        speak(message.textContent, message.options, sendResponse, lang);
+        //speak(message.textContent, lang).then(transcript => sendResponse({ transcript }));
+      });
       return true;
     case 'stopSpeech':
       chrome.tts.stop();
@@ -79,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-function speak(text, options = {}, callback) {
+function speak(text, options = {}, callback, lang = 'en-US') {
   if (!text) {
     if (callback) callback();
     return;
@@ -88,7 +94,7 @@ function speak(text, options = {}, callback) {
   const ttsOptions = {
     rate: options.rate || 1.0,
     pitch: options.pitch || 1.0,
-    voiceName: "Google Spanish Male" || '',
+    voiceName: `Google ${lang} Male` || '',
     onEvent: (event) => {
       if (['end', 'interrupted', 'error'].includes(event.type)) {
         if (callback) callback();
