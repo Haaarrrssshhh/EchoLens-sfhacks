@@ -192,7 +192,7 @@ class EchoLensAccessibility {
 
   // Placeholder function for the "G" key event with visual feedback
   async handleGKey() {
-    const element = document.activeElement;
+    const element = this.interactiveElements?.[this.currentFocusIndex];
 
     if (!element) {
       this.announceMessage("No element is currently focused.");
