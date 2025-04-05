@@ -2,6 +2,8 @@
  * EchoLens - Accessibility Content Script
  * Provides core accessibility features for blind and low vision users
  */
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import 'dotenv/config';
 
 class EchoLensAccessibility {
   constructor() {
@@ -18,9 +20,10 @@ class EchoLensAccessibility {
       focusColor: '#FF4081',
       enableKeyboardShortcuts: true,
     };
-    
+
     this.initializeSettings();
     this.initializeKeyboardListeners();
+    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
 
   // Initialize with stored settings or defaults
@@ -45,7 +48,7 @@ class EchoLensAccessibility {
     } else {
       this.disableHighContrast();
     }
-    
+
     if (this.settings.fontSize !== 16) {
       document.documentElement.style.fontSize = `${this.settings.fontSize}px`;
     }
@@ -106,7 +109,7 @@ class EchoLensAccessibility {
       this.toggleScreenReader();
       return;
     }
-    
+
     // If screen reader is active
     if (this.isActive) {
       // Up/Down for navigation between interactive elements
@@ -117,25 +120,25 @@ class EchoLensAccessibility {
         event.preventDefault();
         this.navigatePrevious();
       }
-      
+
       // Space or Enter to activate the current element
       else if ((event.key === ' ' || event.key === 'Enter') && this.currentFocusIndex >= 0) {
         event.preventDefault();
         this.activateCurrentElement();
       }
-      
+
       // Alt+H or Option+H to read page headings
       else if (altKey && (event.key === 'h' || event.key === 'H')) {
         event.preventDefault();
         this.readHeadings();
       }
-      
+
       // Alt+L or Option+L to read landmarks
       else if (altKey && (event.key === 'l' || event.key === 'L')) {
         event.preventDefault();
         this.readLandmarks();
       }
-      
+
       // Alt+P or Option+P to read paragraphs
       else if (altKey && (event.key === 'p' || event.key === 'P')) {
         event.preventDefault();
@@ -147,7 +150,7 @@ class EchoLensAccessibility {
         event.preventDefault();
         this.readImages();
       }
-      
+
       // Escape to stop reading
       else if (event.key === 'Escape') {
         event.preventDefault();
@@ -155,9 +158,50 @@ class EchoLensAccessibility {
       }
     }
   }
+  // Converts local file information to base64
+  fileToGenerativePart(path, mimeType) {
+    const fs = require("fs");
+    return {
+      inlineData: {
+        data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+        mimeType
+      },
+    };
+  }
+  // Placeholder function to transcribe a webpage using Gemini API
+  // Note: This is a placeholder and should be replaced with actual page content and images
+  async getTranscript() {
+
+    try {
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+      const prompt = "Transcribe this webpage for a blind user. Include all the web page text and descriptions of all image content in the order thet appear.";
+      const pageTextPrompt = "This is a test article on AI and images.";
+      const images = [
+        {
+          src: "assets/gemini.png",
+          mimeType: "image/png"
+        }
+      ]
+      const imageParts = [
+        ...images.map((image, index) => ({
+          ...fileToGenerativePart(image.src, image.mimeType),
+        })),
+      ];
+
+      const result = await model.generateContent([prompt, pageTextPrompt, ...imageParts]);
+      const text = await result.response.text();
+
+      console.log({ transcription: text });
+    } catch (error) {
+      console.error("Error in /transcribe endpoint:", error);
+
+    }
+  }
 
   // Placeholder function for the "G" key event with visual feedback
   handleGKey() {
+
     // Create a div element to show a visual indicator
     const feedback = document.createElement('div');
     feedback.textContent = "G key pressed!";
@@ -171,10 +215,10 @@ class EchoLensAccessibility {
     feedback.style.zIndex = "9999";
     feedback.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
     document.body.appendChild(feedback);
-    
+
     // Remove the feedback after 2 seconds
     setTimeout(() => feedback.remove(), 2000);
-    
+
     // Optionally, announce message via TTS (or any other action)
     this.announceMessage("G key pressed - visual indicator shown");
   }
@@ -213,7 +257,7 @@ class EchoLensAccessibility {
         return;
       }
     }
-    
+
     this.currentFocusIndex = (this.currentFocusIndex + 1) % this.interactiveElements.length;
     this.focusElement(this.interactiveElements[this.currentFocusIndex]);
   }
@@ -227,7 +271,7 @@ class EchoLensAccessibility {
         return;
       }
     }
-    
+
     this.currentFocusIndex = (this.currentFocusIndex - 1 + this.interactiveElements.length) % this.interactiveElements.length;
     this.focusElement(this.interactiveElements[this.currentFocusIndex]);
   }
@@ -236,10 +280,10 @@ class EchoLensAccessibility {
   focusElement(element) {
     // Clear previous focus styling
     this.clearFocus();
-    
+
     // Apply focus
     element.focus();
-    
+
     // Add visual focus indicator
     const focusOutline = document.createElement('div');
     focusOutline.className = 'echolens-focus-indicator';
@@ -254,10 +298,10 @@ class EchoLensAccessibility {
     focusOutline.style.pointerEvents = 'none';
     focusOutline.style.zIndex = '999999';
     document.body.appendChild(focusOutline);
-    
+
     // Scroll the element into view if needed
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
+
     // Announce the element
     const elementDescription = this.getElementDescription(element);
     this.announceMessage(elementDescription);
@@ -272,19 +316,19 @@ class EchoLensAccessibility {
   // Get a descriptive string for an element
   getElementDescription(element) {
     let description = '';
-    
+
     // Get element type
     const tagName = element.tagName.toLowerCase();
-    
+
     // Check ARIA roles
     const role = element.getAttribute('role');
-    
+
     // Check for accessible name
-    let name = element.getAttribute('aria-label') || 
-               element.getAttribute('alt') || 
-               element.getAttribute('title') || 
-               element.textContent.trim();
-    
+    let name = element.getAttribute('aria-label') ||
+      element.getAttribute('alt') ||
+      element.getAttribute('title') ||
+      element.textContent.trim();
+
     // Handle specific element types
     if (tagName === 'a') {
       description = `Link: ${name}`;
@@ -294,15 +338,15 @@ class EchoLensAccessibility {
       const inputType = element.getAttribute('type') || 'text';
       const value = element.value;
       description = `${inputType} input`;
-      
+
       if (element.getAttribute('placeholder')) {
         description += `: ${element.getAttribute('placeholder')}`;
       }
-      
+
       if (value) {
         description += `, value: ${value}`;
       }
-      
+
       if (element.getAttribute('required')) {
         description += ', required';
       }
@@ -335,24 +379,24 @@ class EchoLensAccessibility {
     } else {
       description = name;
     }
-    
+
     // Include state information
     if (element.getAttribute('aria-expanded') === 'true') {
       description += ', expanded';
     } else if (element.getAttribute('aria-expanded') === 'false') {
       description += ', collapsed';
     }
-    
+
     if (element.getAttribute('aria-checked') === 'true' || element.checked) {
       description += ', checked';
     } else if (element.getAttribute('aria-checked') === 'false') {
       description += ', not checked';
     }
-    
+
     if (element.getAttribute('aria-disabled') === 'true' || element.disabled) {
       description += ', disabled';
     }
-    
+
     return description;
   }
 
@@ -360,7 +404,7 @@ class EchoLensAccessibility {
   activateCurrentElement() {
     if (this.currentFocusIndex >= 0 && this.currentFocusIndex < this.interactiveElements.length) {
       const element = this.interactiveElements[this.currentFocusIndex];
-      
+
       // Different activation based on element type
       if (element.tagName.toLowerCase() === 'input') {
         const inputType = element.getAttribute('type');
@@ -388,19 +432,19 @@ class EchoLensAccessibility {
   readHeadings() {
     // First stop any ongoing reading
     this.stopReading();
-    
+
     const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]');
     if (headings.length === 0) {
       this.announceMessage("No headings found");
       return;
     }
-    
+
     this.readingQueue = Array.from(headings).map(heading => {
-      const level = heading.tagName ? parseInt(heading.tagName.charAt(1)) : 
-                  heading.getAttribute('aria-level') || 2;
+      const level = heading.tagName ? parseInt(heading.tagName.charAt(1)) :
+        heading.getAttribute('aria-level') || 2;
       return `Level ${level} heading: ${heading.textContent.trim()}`;
     });
-    
+
     this.announceMessage(`${headings.length} headings found`);
     this.isReading = true;
     this.processReadingQueue();
@@ -410,13 +454,13 @@ class EchoLensAccessibility {
   readParagraphs() {
     // First stop any ongoing reading
     this.stopReading();
-    
+
     const paragraphs = document.querySelectorAll('p');
     if (paragraphs.length === 0) {
       this.announceMessage("No paragraphs found");
       return;
     }
-    
+
     this.readingQueue = Array.from(paragraphs).map(paragraph => {
       const text = paragraph.textContent.trim();
       if (text.length > 200) {
@@ -424,7 +468,7 @@ class EchoLensAccessibility {
       }
       return `Paragraph: ${text}`;
     });
-    
+
     this.announceMessage(`${paragraphs.length} paragraphs found`);
     this.isReading = true;
     this.processReadingQueue();
@@ -434,22 +478,22 @@ class EchoLensAccessibility {
   readLandmarks() {
     // First stop any ongoing reading
     this.stopReading();
-    
+
     const landmarks = document.querySelectorAll(
       'header, footer, main, nav, aside, section[aria-label], section[aria-labelledby], [role="banner"], [role="contentinfo"], [role="main"], [role="navigation"], [role="complementary"], [role="search"], [role="region"][aria-label], [role="region"][aria-labelledby]'
     );
-    
+
     if (landmarks.length === 0) {
       this.announceMessage("No landmarks found");
       return;
     }
-    
+
     this.readingQueue = Array.from(landmarks).map(landmark => {
       let type = landmark.tagName.toLowerCase();
       if (landmark.hasAttribute('role')) {
         type = landmark.getAttribute('role');
       }
-      
+
       let name = landmark.getAttribute('aria-label') || '';
       const labelledby = landmark.getAttribute('aria-labelledby');
       if (labelledby) {
@@ -458,10 +502,10 @@ class EchoLensAccessibility {
           name = labelElement.textContent.trim();
         }
       }
-      
+
       return `${type} landmark${name ? ': ' + name : ''}`;
     });
-    
+
     this.announceMessage(`${landmarks.length} landmarks found`);
     this.isReading = true;
     this.processReadingQueue();
@@ -471,26 +515,26 @@ class EchoLensAccessibility {
   readImages() {
     // First stop any ongoing reading
     this.stopReading();
-    
+
     const images = document.querySelectorAll('img');
     if (images.length === 0) {
       this.announceMessage("No images found");
       return;
     }
-    
+
     this.readingQueue = Array.from(images).map(img => {
       const alt = img.getAttribute('alt') || 'No alt text provided';
       const src = img.getAttribute('src') || '';
       const fileName = src.split('/').pop();
-      
+
       let description = `Image: ${alt}`;
       if (alt === 'No alt text provided' && fileName) {
         description += ` (filename: ${fileName})`;
       }
-      
+
       return description;
     });
-    
+
     this.announceMessage(`${images.length} images found`);
     this.isReading = true;
     this.processReadingQueue();
@@ -574,10 +618,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'describeImage') {
     // Handle image description request
     if (message.imageUrl) {
-      const images = Array.from(document.querySelectorAll('img')).filter(img => 
+      const images = Array.from(document.querySelectorAll('img')).filter(img =>
         img.src === message.imageUrl || img.currentSrc === message.imageUrl
       );
-      
+
       if (images.length > 0) {
         const img = images[0];
         const altText = img.alt || 'No image description available';
