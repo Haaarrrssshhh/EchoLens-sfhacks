@@ -23,6 +23,15 @@ class EchoLensAccessibility {
     this.initializeKeyboardListeners();
   }
 
+  // Get current state
+  getState() {
+    return {
+      isActive: this.isActive,
+      isReading: this.isReading,
+      settings: this.settings
+    };
+  }
+
   // Initialize with stored settings or defaults
   async initializeSettings() {
     try {
@@ -47,8 +56,25 @@ class EchoLensAccessibility {
     }
     
     if (this.settings.fontSize !== 16) {
-      document.documentElement.style.fontSize = `${this.settings.fontSize}px`;
+      this.applyFontSize(this.settings.fontSize);
     }
+  }
+
+  // Apply font size to all text elements
+  applyFontSize(size) {
+    const style = document.getElementById('echolens-font-size');
+    if (style) {
+      style.remove();
+    }
+    
+    const newStyle = document.createElement('style');
+    newStyle.id = 'echolens-font-size';
+    newStyle.textContent = `
+      body, p, h1, h2, h3, h4, h5, h6, span, div, a, button, input, select, textarea {
+        font-size: ${size}px !important;
+      }
+    `;
+    document.head.appendChild(newStyle);
   }
 
   // Enable high contrast mode
@@ -101,7 +127,7 @@ class EchoLensAccessibility {
     const altKey = isMac ? event.metaKey || event.altKey : event.altKey;
 
     // Alt+Shift+A (or Option+Shift+A on Mac) to toggle the screen reader
-    if (altKey && event.shiftKey && event.key === 'A') {
+    if (altKey && event.shiftKey && (event.key === 'A' || event.key === 'a')) {
       event.preventDefault();
       this.toggleScreenReader();
       return;
@@ -146,6 +172,12 @@ class EchoLensAccessibility {
       else if (altKey && (event.key === 'i' || event.key === 'I')) {
         event.preventDefault();
         this.readImages();
+      }
+
+      // Alt+G or Option+G to read all text
+      else if (altKey && (event.key === 'g' || event.key === 'G')) {
+        event.preventDefault();
+        this.readAllText();
       }
       
       // Escape to stop reading
@@ -195,12 +227,35 @@ class EchoLensAccessibility {
   // Scan the page for interactive elements
   scanPageElements() {
     // Find all interactive elements including paragraphs and images
-    this.interactiveElements = Array.from(document.querySelectorAll(
-      'a, button, input, select, textarea, p, img, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex]'
-    )).filter(el => {
-      // Filter out hidden elements
+    const allElements = Array.from(document.querySelectorAll(
+      'a, button, input, select, textarea, p, img, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex], iframe, div'
+    ));
+    
+    // Filter out hidden elements and those within iframes (since we can't access them)
+    this.interactiveElements = allElements.filter(el => {
+      // Skip elements without visible content
+      if (el.tagName.toLowerCase() !== 'img' && 
+          el.textContent.trim() === '' && 
+          !el.getAttribute('aria-label') && 
+          !el.getAttribute('alt') &&
+          !el.getAttribute('title') &&
+          !el.getAttribute('placeholder') &&
+          el.tagName.toLowerCase() !== 'input' &&
+          el.tagName.toLowerCase() !== 'textarea') {
+        return false;
+      }
+      
+      // Check if element is visible
       const style = window.getComputedStyle(el);
-      return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+      const isVisible = style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       style.opacity !== '0' &&
+                       el.offsetParent !== null;
+      
+      // Additional check for zero-sized elements
+      const hasSize = el.offsetWidth > 0 && el.offsetHeight > 0;
+      
+      return isVisible && hasSize;
     });
   }
 
@@ -237,8 +292,12 @@ class EchoLensAccessibility {
     // Clear previous focus styling
     this.clearFocus();
     
-    // Apply focus
-    element.focus();
+    // Apply focus - try-catch to handle potential errors for some elements
+    try {
+      element.focus();
+    } catch (e) {
+      console.log('Could not focus element', e);
+    }
     
     // Add visual focus indicator
     const focusOutline = document.createElement('div');
@@ -332,6 +391,21 @@ class EchoLensAccessibility {
       if (alt === 'No alt text provided' && fileName) {
         description += ` (filename: ${fileName})`;
       }
+    } else if (tagName === 'iframe') {
+      description = 'Iframe content';
+      if (element.getAttribute('title')) {
+        description += `: ${element.getAttribute('title')}`;
+      }
+    } else if (tagName === 'div') {
+      if (name && name.length > 0) {
+        if (name.length > 100) {
+          description = `Content: ${name.substring(0, 100)}... (${name.length} characters)`;
+        } else {
+          description = `Content: ${name}`;
+        }
+      } else {
+        description = 'Content container';
+      }
     } else {
       description = name;
     }
@@ -378,8 +452,14 @@ class EchoLensAccessibility {
         // For paragraphs, read the full content
         this.announceMessage(`Reading paragraph: ${element.textContent.trim()}`);
       } else {
-        // Click the element
-        element.click();
+        // Try to click the element but catch any errors
+        try {
+          element.click();
+        } catch (e) {
+          console.log('Could not click element', e);
+          // As a fallback, read the element's description
+          this.announceMessage(this.getElementDescription(element));
+        }
       }
     }
   }
@@ -419,9 +499,6 @@ class EchoLensAccessibility {
     
     this.readingQueue = Array.from(paragraphs).map(paragraph => {
       const text = paragraph.textContent.trim();
-      if (text.length > 200) {
-        return `Paragraph: ${text.substring(0, 200)}... continues`;
-      }
       return `Paragraph: ${text}`;
     });
     
@@ -571,6 +648,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'readImages') {
     echoLens.readImages();
     sendResponse({ success: true });
+  } else if (message.action === 'getScreenReaderState') {
+    sendResponse({ isActive: echoLens.isActive });
   } else if (message.action === 'describeImage') {
     // Handle image description request
     if (message.imageUrl) {

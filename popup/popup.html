@@ -7,99 +7,114 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>EchoLens</h1>
-      <p>Web Accessibility Tools</p>
-    </header>
+  <header>
+    <h1>EchoLens</h1>
+    <p class="subtitle">Web Accessibility Helper</p>
+  </header>
+  
+  <main>
+    <!-- Main Toggle Button -->
+    <div class="control-section">
+      <button id="toggle-btn" class="primary-btn toggle-btn">SCREEN READER: OFF</button>
+    </div>
     
-    <section class="actions">
-      <button id="toggleScreenReader" class="btn primary">
-        <span class="icon">🔊</span>
-        Toggle Screen Reader
-      </button>
-      
-      <button id="readHeadings" class="btn">
-        <span class="icon">📑</span>
-        Read Headings
-      </button>
-      
-      <button id="readLandmarks" class="btn">
-        <span class="icon">🏁</span>
-        Read Landmarks
-      </button>
-      
-      <button id="readParagraphs" class="btn">
-        <span class="icon">📄</span>
-        Read Paragraphs
-      </button>
-      
-      <button id="readImages" class="btn">
-        <span class="icon">🖼️</span>
-        Read Images
-      </button>
-      
-      <button id="stopReading" class="btn">
-        <span class="icon">⏹️</span>
-        Stop Reading
-      </button>
-    </section>
+    <!-- Reading Controls -->
+    <div class="control-section">
+      <h2>Reading Options</h2>
+      <div class="button-group">
+        <button id="read-headings" class="action-btn">
+          <img src="../icons/headings.svg" alt="Headings icon" class="btn-icon">
+          Headings
+        </button>
+        <button id="read-landmarks" class="action-btn">
+          <img src="../icons/landmarks.svg" alt="Landmarks icon" class="btn-icon">
+          Landmarks
+        </button>
+        <button id="read-paragraphs" class="action-btn">
+          <img src="../icons/paragraphs.svg" alt="Paragraphs icon" class="btn-icon">
+          Paragraphs
+        </button>
+        <button id="read-images" class="action-btn">
+          <img src="../icons/images.svg" alt="Images icon" class="btn-icon">
+          Images
+        </button>
+        <button id="stop-reading" class="action-btn stop">
+          <img src="../icons/stop.svg" alt="Stop icon" class="btn-icon">
+          Stop
+        </button>
+      </div>
+    </div>
     
-    <section class="quick-settings">
-      <h2>Quick Settings</h2>
+    <!-- Settings -->
+    <div class="control-section">
+      <h2>Settings</h2>
       
-      <div class="setting">
-        <label for="highContrast">High Contrast</label>
-        <div class="toggle">
-          <input type="checkbox" id="highContrast">
-          <span class="slider"></span>
+      <!-- High Contrast Toggle -->
+      <div class="setting-row">
+        <label for="high-contrast" class="setting-label">High Contrast:</label>
+        <div class="switch-wrapper">
+          <input type="checkbox" id="high-contrast" class="switch-checkbox">
+          <button class="toggle-btn high-contrast">HIGH CONTRAST: OFF</button>
         </div>
       </div>
       
-      <div class="setting">
-        <label for="speechRate">Speech Rate</label>
-        <input type="range" id="speechRate" min="0.5" max="4" step="0.1" value="1">
-        <span class="value" id="speechRateValue">1.0</span>
+      <!-- Speech Rate -->
+      <div class="setting-row">
+        <label for="speech-rate" class="setting-label">Speech Rate:</label>
+        <div class="slider-container">
+          <input 
+            type="range" 
+            id="speech-rate" 
+            min="0.5" 
+            max="2" 
+            step="0.1" 
+            value="1.0"
+            class="slider">
+          <span id="rate-value" class="slider-value">1.0x</span>
+        </div>
       </div>
       
-      <div class="setting">
-        <label for="fontSize">Font Size</label>
-        <input type="range" id="fontSize" min="14" max="28" step="2" value="16">
-        <span class="value" id="fontSizeValue">16px</span>
+      <!-- Font Size -->
+      <div class="setting-row">
+        <label for="font-size" class="setting-label">Font Size:</label>
+        <div class="slider-container">
+          <input 
+            type="range" 
+            id="font-size" 
+            min="12" 
+            max="32" 
+            step="1" 
+            value="16"
+            class="slider">
+          <span id="size-value" class="slider-value">16px</span>
+        </div>
       </div>
-      
-      <button id="openOptions" class="btn secondary">
-        <span class="icon">⚙️</span>
-        All Settings
-      </button>
-    </section>
-    
-    <footer>
-      <button id="help" class="btn text">How to Use</button>
-      <span class="version">v1.0.0</span>
-    </footer>
-  </div>
-  
-  <dialog id="helpDialog">
-    <div class="dialog-content">
-      <h2>Keyboard Shortcuts</h2>
-      <ul>
-        <li><strong>Option+Shift+A</strong> - Toggle screen reader (Mac)</li>
-        <li><strong>Alt+Shift+A</strong> - Toggle screen reader (Windows/Linux)</li>
-        <li><strong>Tab</strong> - Navigate through interactive elements</li>
-        <li><strong>Arrow Up/Down</strong> - Navigate with screen reader</li>
-        <li><strong>Space/Enter</strong> - Activate focused element</li>
-        <li><strong>Alt+H / Option+H</strong> - Read headings</li>
-        <li><strong>Alt+L / Option+L</strong> - Read landmarks</li>
-        <li><strong>Alt+P / Option+P</strong> - Read paragraphs</li>
-        <li><strong>Alt+I / Option+I</strong> - Read images</li>
-        <li><strong>Escape</strong> - Stop reading</li>
-      </ul>
-      <p>When screen reader is active, use arrow keys to navigate through all elements, including images and paragraphs.</p>
-      <button id="closeHelp" class="btn secondary">Close</button>
     </div>
-  </dialog>
-
+    
+    <!-- Keyboard Shortcuts -->
+    <div class="control-section">
+      <button id="shortcuts-info" class="info-btn">
+        <img src="../icons/keyboard.svg" alt="Keyboard icon" class="btn-icon">
+        Keyboard Shortcuts
+      </button>
+      <ul id="shortcuts-list" class="hidden shortcuts-list">
+        <li><strong>Alt+Shift+A</strong> - Toggle Screen Reader</li>
+        <li><strong>Alt+H</strong> - Read Headings</li>
+        <li><strong>Alt+L</strong> - Read Landmarks</li>
+        <li><strong>Alt+P</strong> - Read Paragraphs</li>
+        <li><strong>Alt+I</strong> - Read Images</li>
+        <li><strong>Alt+G</strong> - Read All Text</li>
+        <li><strong>Escape</strong> - Stop Reading</li>
+        <li><strong>↑/↓</strong> - Navigate Elements</li>
+        <li><strong>Space/Enter</strong> - Activate Element</li>
+      </ul>
+    </div>
+  </main>
+  
+  <footer>
+    <p>Version 1.0.0 &copy; 2023 EchoLens</p>
+  </footer>
+  
   <script src="popup.js"></script>
 </body>
 </html> 

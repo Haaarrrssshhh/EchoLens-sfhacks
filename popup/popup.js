@@ -1,156 +1,183 @@
 /**
  * EchoLens - Popup Script
+ * Controls the extension popup interface
  */
 
-// DOM Elements
-const toggleScreenReaderBtn = document.getElementById('toggleScreenReader');
-const readHeadingsBtn = document.getElementById('readHeadings');
-const readLandmarksBtn = document.getElementById('readLandmarks');
-const readParagraphsBtn = document.getElementById('readParagraphs');
-const readImagesBtn = document.getElementById('readImages');
-const stopReadingBtn = document.getElementById('stopReading');
-const openOptionsBtn = document.getElementById('openOptions');
-const helpBtn = document.getElementById('help');
-const closeHelpBtn = document.getElementById('closeHelp');
-const helpDialog = document.getElementById('helpDialog');
+// Constants for text and states
+const toggleText = {
+  on: "SCREEN READER: ON",
+  off: "SCREEN READER: OFF"
+};
 
-// Settings elements
-const highContrastToggle = document.getElementById('highContrast');
-const speechRateSlider = document.getElementById('speechRate');
-const speechRateValue = document.getElementById('speechRateValue');
-const fontSizeSlider = document.getElementById('fontSize');
-const fontSizeValue = document.getElementById('fontSizeValue');
+// State tracking
+let isScreenReaderActive = false;
 
-// Current settings
-let currentSettings = {};
-
-// Initialize
-document.addEventListener('DOMContentLoaded', async () => {
+// Initialize the popup when the document is fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Get the current tab
+  const getCurrentTab = async () => {
+    const queryOptions = { active: true, currentWindow: true };
+    const [tab] = await chrome.tabs.query(queryOptions);
+    return tab;
+  };
+  
   // Load settings
-  try {
-    chrome.runtime.sendMessage({ action: 'getSettings' }, (response) => {
-      if (response && response.settings) {
-        currentSettings = response.settings;
-        updateUI();
-      }
-    });
-  } catch (error) {
-    console.error('Failed to load settings:', error);
-  }
-
-  // Set up event listeners
-  setupEventListeners();
-});
-
-// Update UI based on current settings
-function updateUI() {
-  highContrastToggle.checked = currentSettings.highContrast;
-  speechRateSlider.value = currentSettings.speechRate || 1.0;
-  speechRateValue.textContent = (currentSettings.speechRate || 1.0).toFixed(1);
-  fontSizeSlider.value = currentSettings.fontSize || 16;
-  fontSizeValue.textContent = `${currentSettings.fontSize || 16}px`;
-}
-
-// Set up event listeners
-function setupEventListeners() {
-  // Main actions
-  toggleScreenReaderBtn.addEventListener('click', () => {
-    sendMessageToActiveTab('toggleScreenReader');
-  });
-
-  readHeadingsBtn.addEventListener('click', () => {
-    // First stop any ongoing reading
-    sendMessageToActiveTab('stopReading');
-    setTimeout(() => {
-      sendMessageToActiveTab('readHeadings');
-    }, 100);
-  });
-
-  readLandmarksBtn.addEventListener('click', () => {
-    // First stop any ongoing reading
-    sendMessageToActiveTab('stopReading');
-    setTimeout(() => {
-      sendMessageToActiveTab('readLandmarks');
-    }, 100);
-  });
-
-  readParagraphsBtn.addEventListener('click', () => {
-    // First stop any ongoing reading
-    sendMessageToActiveTab('stopReading');
-    setTimeout(() => {
-      sendMessageToActiveTab('readParagraphs');
-    }, 100);
-  });
-
-  readImagesBtn.addEventListener('click', () => {
-    // First stop any ongoing reading
-    sendMessageToActiveTab('stopReading');
-    setTimeout(() => {
-      sendMessageToActiveTab('readImages');
-    }, 100);
-  });
-
-  stopReadingBtn.addEventListener('click', () => {
-    sendMessageToActiveTab('stopReading');
-  });
-
-  openOptionsBtn.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
-
-  // Settings
-  highContrastToggle.addEventListener('change', () => {
-    updateSetting('highContrast', highContrastToggle.checked);
-  });
-
-  speechRateSlider.addEventListener('input', () => {
-    const value = parseFloat(speechRateSlider.value);
-    speechRateValue.textContent = value.toFixed(1);
-    updateSetting('speechRate', value);
-  });
-
-  fontSizeSlider.addEventListener('input', () => {
-    const value = parseInt(fontSizeSlider.value);
-    fontSizeValue.textContent = `${value}px`;
-    updateSetting('fontSize', value);
-  });
-
-  // Help dialog
-  helpBtn.addEventListener('click', () => {
-    helpDialog.showModal();
-  });
-
-  closeHelpBtn.addEventListener('click', () => {
-    helpDialog.close();
-  });
-
-  // Add Option/Alt+P keyboard shortcut to the help dialog
-  const helpList = helpDialog.querySelector('ul');
-  if (helpList) {
-    const paragraphItem = document.createElement('li');
-    paragraphItem.innerHTML = '<strong>Alt+P / Option+P</strong> - Read paragraphs';
-    helpList.appendChild(paragraphItem);
-  }
-}
-
-// Send message to the active tab
-function sendMessageToActiveTab(action, data = {}) {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs && tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action, ...data });
+  chrome.storage.sync.get(['speechRate', 'highContrast', 'fontSize'], function(result) {
+    // Set speech rate slider value if available
+    if (result.speechRate) {
+      document.getElementById('speech-rate').value = result.speechRate;
+      document.getElementById('rate-value').textContent = result.speechRate + 'x';
     }
+    
+    // Set font size slider value if available
+    if (result.fontSize) {
+      document.getElementById('font-size').value = result.fontSize;
+      document.getElementById('size-value').textContent = result.fontSize + 'px';
+    }
+    
+    // Set high contrast toggle if available
+    if (result.highContrast) {
+      document.getElementById('high-contrast').checked = result.highContrast;
+      updateHighContrastButton();
+    }
+    
+    // Check the current screen reader state
+    getCurrentTab().then(tab => {
+      chrome.tabs.sendMessage(tab.id, { action: 'getScreenReaderState' }, function(response) {
+        if (response && response.isActive !== undefined) {
+          isScreenReaderActive = response.isActive;
+          updateToggleButton();
+        }
+      });
+    });
   });
-}
-
-// Update a setting
-function updateSetting(key, value) {
-  currentSettings[key] = value;
   
-  const settingUpdate = {};
-  settingUpdate[key] = value;
+  // Update the high contrast button state
+  function updateHighContrastButton() {
+    const highContrastSwitch = document.getElementById('high-contrast');
+    const highContrastButton = document.querySelector('.toggle-btn.high-contrast');
+    
+    if (highContrastSwitch.checked) {
+      highContrastButton.classList.add('active');
+      highContrastButton.textContent = 'HIGH CONTRAST: ON';
+    } else {
+      highContrastButton.classList.remove('active');
+      highContrastButton.textContent = 'HIGH CONTRAST: OFF';
+    }
+  }
   
-  chrome.runtime.sendMessage({
-    action: 'updateSettings',
-    settings: settingUpdate
+  // Update the toggle button state
+  function updateToggleButton() {
+    const toggleButton = document.getElementById('toggle-btn');
+    
+    if (isScreenReaderActive) {
+      toggleButton.classList.add('active');
+      toggleButton.textContent = toggleText.on;
+    } else {
+      toggleButton.classList.remove('active');
+      toggleButton.textContent = toggleText.off;
+    }
+  }
+  
+  // Toggle button event listener
+  document.getElementById('toggle-btn').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    isScreenReaderActive = !isScreenReaderActive;
+    
+    updateToggleButton();
+    
+    chrome.tabs.sendMessage(tab.id, { action: 'toggleScreenReader' });
   });
-} 
+  
+  // Read headings button click event
+  document.getElementById('read-headings').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'readHeadings' });
+  });
+  
+  // Read landmarks button click event
+  document.getElementById('read-landmarks').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'readLandmarks' });
+  });
+  
+  // Read paragraphs button click event
+  document.getElementById('read-paragraphs').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'readParagraphs' });
+  });
+  
+  // Read images button click event
+  document.getElementById('read-images').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'readImages' });
+  });
+  
+  // Stop reading button click event
+  document.getElementById('stop-reading').addEventListener('click', async function() {
+    const tab = await getCurrentTab();
+    chrome.tabs.sendMessage(tab.id, { action: 'stopReading' });
+  });
+  
+  // High contrast toggle event
+  document.getElementById('high-contrast').addEventListener('change', function() {
+    const isHighContrast = this.checked;
+    chrome.storage.sync.set({ highContrast: isHighContrast });
+    
+    updateHighContrastButton();
+    
+    // Apply high contrast setting to the current tab
+    getCurrentTab().then(tab => {
+      chrome.tabs.sendMessage(tab.id, { 
+        action: 'updateSettings', 
+        settings: { highContrast: isHighContrast }
+      });
+    });
+  });
+  
+  // Additional event listener for the high contrast button itself
+  document.querySelector('.toggle-btn.high-contrast').addEventListener('click', function() {
+    const highContrastSwitch = document.getElementById('high-contrast');
+    highContrastSwitch.checked = !highContrastSwitch.checked;
+    
+    // Trigger the change event manually
+    const event = new Event('change');
+    highContrastSwitch.dispatchEvent(event);
+  });
+  
+  // Speech rate slider event
+  document.getElementById('speech-rate').addEventListener('input', function() {
+    const rate = parseFloat(this.value);
+    document.getElementById('rate-value').textContent = rate + 'x';
+    chrome.storage.sync.set({ speechRate: rate });
+    
+    // Apply speech rate setting to the current tab
+    getCurrentTab().then(tab => {
+      chrome.tabs.sendMessage(tab.id, { 
+        action: 'updateSettings', 
+        settings: { speechRate: rate }
+      });
+    });
+  });
+  
+  // Font size slider event
+  document.getElementById('font-size').addEventListener('input', function() {
+    const size = parseInt(this.value);
+    document.getElementById('size-value').textContent = size + 'px';
+    chrome.storage.sync.set({ fontSize: size });
+    
+    // Apply font size setting to the current tab
+    getCurrentTab().then(tab => {
+      chrome.tabs.sendMessage(tab.id, { 
+        action: 'updateSettings', 
+        settings: { fontSize: size }
+      });
+    });
+  });
+  
+  // Keyboard shortcuts info
+  document.getElementById('shortcuts-info').addEventListener('click', function() {
+    const shortcutsList = document.getElementById('shortcuts-list');
+    shortcutsList.classList.toggle('hidden');
+  });
+}); 

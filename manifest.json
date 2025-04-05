@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "EchoLens",
   "version": "1.0.0",
-  "description": "An accessibility extension for blind and low vision users",
+  "description": "Enhances web accessibility for visually impaired users with screen reading, high contrast mode, and more.",
   "permissions": [
     "activeTab",
     "storage",
@@ -42,5 +42,31 @@
     "32": "images/icon-32.png",
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
+  },
+  "commands": {
+    "toggle_screen_reader": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "Toggle Screen Reader"
+    },
+    "read_headings": {
+      "suggested_key": {
+        "default": "Alt+H"
+      },
+      "description": "Read Headings"
+    },
+    "read_all_text": {
+      "suggested_key": {
+        "default": "Alt+G"
+      },
+      "description": "Read All Text"
+    },
+    "stop_reading": {
+      "suggested_key": {
+        "default": "Escape"
+      },
+      "description": "Stop Reading"
+    }
   }
 } 
