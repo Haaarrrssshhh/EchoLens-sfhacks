@@ -2,13 +2,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-async function getTextTranscript(textContent) {
+async function getTextTranscript(textContent, targetLanguage = 'Spanish') {
   try {
     console.log("Sending text to Gemini:", textContent); // 🔍 DEBUG
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const prompt = "Transcribe the following text concisely for a blind user, focusing on essential information. Ensure clear pronunciation and appropriate pauses for punctuation. Indicate any formatting changes, such as headings, lists, or emphasis.";
+    const prompt = `Translate the text into ${targetLanguage} and Transcribe the text concisely for a blind user, 
+    focusing on essential information. Return only the translated text.`;
+
     const result = await model.generateContent([prompt, textContent]);
 
     const transcript = await result.response.text();
@@ -22,7 +24,7 @@ async function getTextTranscript(textContent) {
 }
 
 
-async function getImageTranscript(imageUrl, altText = '') {
+async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'Spanish') {
   try {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
@@ -37,7 +39,7 @@ async function getImageTranscript(imageUrl, altText = '') {
       }
     };
 
-    const prompt = "Describe this image concisely for a blind user, focusing on the key elements that convey its primary meaning or purpose.  Omit unnecessary details or subjective interpretations.  Prioritize information that would be most helpful for understanding the image's context and relevance.";
+    const prompt = `Describe this image into ${targetLanguage} and concisely for a blind user, focusing on the key elements that convey its primary meaning or purpose.  Omit unnecessary details or subjective interpretations.  Prioritize information that would be most helpful for understanding the image's context and relevance.`;
     const contentPrompt = `Alt text: ${altText}`;
 
     const result = await model.generateContent([prompt, contentPrompt, imagePart]);
@@ -75,7 +77,7 @@ function speak(text, options = {}, callback) {
   const ttsOptions = {
     rate: options.rate || 1.0,
     pitch: options.pitch || 1.0,
-    voiceName: options.voiceName || '',
+    voiceName: "Google Spanish Male" || '',
     onEvent: (event) => {
       if (['end', 'interrupted', 'error'].includes(event.type)) {
         if (callback) callback();
