@@ -98,6 +98,17 @@ class EchoLensAccessibility {
           color: #ffff00 !important;
           border: 1px solid #ffff00 !important;
         }
+        p, span, div, h1, h2, h3, h4, h5, h6, li, td, th {
+          color: #fff !important;
+        }
+        /* Fix for dark text like rgb(32, 34, 36) */
+        * {
+          color: #fff !important;
+        }
+        /* Exceptions for links and interactive elements */
+        a, button, [role="button"], [role="link"] {
+          color: #ffff00 !important;
+        }
         img {
           filter: brightness(1.2) contrast(1.2);
         }
