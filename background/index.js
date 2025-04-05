@@ -30,7 +30,7 @@ async function getImageTranscript(imageUrl, altText = '', targetLanguage = 'Engl
     const arrayBuffer = await blob.arrayBuffer();
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const imagePart = {
       inlineData: {
         data: base64,
