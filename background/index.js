@@ -72,6 +72,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     case 'stopSpeech':
       chrome.tts.stop();
+      isSpeaking = false;
       sendResponse({ success: true });
       break;
     case 'getSettings':
@@ -83,33 +84,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+let isSpeaking = false;
+
 function speak(text, options = {}, callback, lang = "English") {
   if (!text) {
     if (callback) callback();
     return;
   }
 
+  isSpeaking = true;
+
   const languageMap = {
-    English: { langCode: "en-US" },
-    Hindi: { langCode: "hi-IN" },
-    Chinese: { langCode: "zh-CN" },
-    French: { langCode: "fr-FR" },
-    Spanish: { langCode: "es-ES" }
+    English: { langCode: "en-US", voiceName: "Google US English" },
+    Hindi: { langCode: "hi-IN", voiceName: "Google हिन्दी" },
+    Chinese: { langCode: "zh-CN", voiceName: "Google 中文（普通话）" },
+    French: { langCode: "fr-FR", voiceName: "Google français" },
+    Spanish: { langCode: "es-ES", voiceName: "Google español" }
   };
 
   const selected = languageMap[lang] || languageMap["English"];
 
-  const ttsOptions = {
+  const ttsOptionsBase = {
     lang: selected.langCode,
+    voiceName: selected.voiceName,
     rate: options.rate || 1.0,
     pitch: options.pitch || 1.0,
-    volume: options.volume || 1.0,
-    onEvent: function (event) {
-      if (['end', 'interrupted', 'error'].includes(event.type)) {
-        if (callback) callback();
-      }
-    }
+    volume: options.volume || 1.0
   };
 
-  chrome.tts.speak(text, ttsOptions);
+  const sentences = text.match(/[^\.!\?]+[\.!\?]*/g) || [text];
+
+  function speakNext(index) {
+    if (!isSpeaking || index >= sentences.length) {
+      isSpeaking = false;
+      if (callback) callback();
+      return;
+    }
+
+    chrome.tts.speak(sentences[index].trim(), {
+      ...ttsOptionsBase,
+      onEvent: (event) => {
+        if (['end', 'interrupted', 'error'].includes(event.type)) {
+          speakNext(index + 1);
+        }
+      }
+    });
+  }
+
+  speakNext(0);
 }
+

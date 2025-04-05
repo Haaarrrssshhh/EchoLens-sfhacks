@@ -191,6 +191,9 @@ class EchoLensAccessibility {
       else if (event.key === 'g' || event.key === 'G') {
         this.handleGKey();
       }
+      else if (event.key === 'f' || event.key === 'F') {
+        this.handleFKey();
+      }
       
       // Escape to stop reading
       else if (event.key === 'Escape') {
@@ -234,6 +237,38 @@ class EchoLensAccessibility {
       );
     }
   }
+
+
+  // function for summary of whole page
+  async handleFKey() {
+    const selectors = "p, h1, h2, h3, h4, h5, h6, textarea";
+    const elements = document.querySelectorAll(selectors);
+
+    const allText = Array.from(elements)
+      .map(el => {
+        if (el.tagName.toLowerCase() === "textarea") {
+          return el.value;
+        } else {
+          return el.innerText || el.textContent;
+        }
+      })
+      .filter(text => text && text.trim().length > 0)
+      .join(" ")
+      .trim();
+
+    if (!allText) {
+      this.announceMessage("No readable text found in <p>, <h1>-<h6>, or <textarea> elements.");
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      { action: "transcribeText", textContent: allText },
+      (response) => {
+        this.announceMessage(response.transcript || "No text transcript.");
+      }
+    );
+  }
+
 
 
 
