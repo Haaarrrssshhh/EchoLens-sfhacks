@@ -2,8 +2,8 @@
  * EchoLens - Accessibility Content Script
  * Provides core accessibility features for blind and low vision users
  */
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import 'dotenv/config';
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// import 'dotenv/config';
 
 class EchoLensAccessibility {
   constructor() {
@@ -23,7 +23,7 @@ class EchoLensAccessibility {
 
     this.initializeSettings();
     this.initializeKeyboardListeners();
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    // this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
 
   // Get current state
@@ -188,46 +188,6 @@ class EchoLensAccessibility {
         event.preventDefault();
         this.stopReading();
       }
-    }
-  }
-  // Converts local file information to base64
-  fileToGenerativePart(path, mimeType) {
-    const fs = require("fs");
-    return {
-      inlineData: {
-        data: Buffer.from(fs.readFileSync(path)).toString("base64"),
-        mimeType
-      },
-    };
-  }
-  // Placeholder function to transcribe a webpage using Gemini API
-  // Note: This is a placeholder and should be replaced with actual page content and images
-  async getTranscript() {
-
-    try {
-
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      const prompt = "Transcribe this webpage for a blind user. Include all the web page text and descriptions of all image content in the order thet appear.";
-      const pageTextPrompt = "This is a test article on AI and images.";
-      const images = [
-        {
-          src: "assets/gemini.png",
-          mimeType: "image/png"
-        }
-      ]
-      const imageParts = [
-        ...images.map((image, index) => ({
-          ...fileToGenerativePart(image.src, image.mimeType),
-        })),
-      ];
-
-      const result = await model.generateContent([prompt, pageTextPrompt, ...imageParts]);
-      const text = await result.response.text();
-
-      console.log({ transcription: text });
-    } catch (error) {
-      console.error("Error in /transcribe endpoint:", error);
-
     }
   }
 
