@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EchoLens</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>EchoLens</h1>
+      <p>Web Accessibility Tools</p>
+    </header>
+    
+    <section class="actions">
+      <button id="toggleScreenReader" class="btn primary">
+        <span class="icon">🔊</span>
+        Toggle Screen Reader
+      </button>
+      
+      <button id="readHeadings" class="btn">
+        <span class="icon">📑</span>
+        Read Headings
+      </button>
+      
+      <button id="readLandmarks" class="btn">
+        <span class="icon">🏁</span>
+        Read Landmarks
+      </button>
+      
+      <button id="stopReading" class="btn">
+        <span class="icon">⏹️</span>
+        Stop Reading
+      </button>
+    </section>
+    
+    <section class="quick-settings">
+      <h2>Quick Settings</h2>
+      
+      <div class="setting">
+        <label for="highContrast">High Contrast</label>
+        <div class="toggle">
+          <input type="checkbox" id="highContrast">
+          <span class="slider"></span>
+        </div>
+      </div>
+      
+      <div class="setting">
+        <label for="speechRate">Speech Rate</label>
+        <input type="range" id="speechRate" min="0.5" max="2" step="0.1" value="1">
+        <span class="value" id="speechRateValue">1.0</span>
+      </div>
+      
+      <div class="setting">
+        <label for="fontSize">Font Size</label>
+        <input type="range" id="fontSize" min="14" max="28" step="2" value="16">
+        <span class="value" id="fontSizeValue">16px</span>
+      </div>
+      
+      <button id="openOptions" class="btn secondary">
+        <span class="icon">⚙️</span>
+        All Settings
+      </button>
+    </section>
+    
+    <footer>
+      <button id="help" class="btn text">How to Use</button>
+      <span class="version">v1.0.0</span>
+    </footer>
+  </div>
+  
+  <dialog id="helpDialog">
+    <div class="dialog-content">
+      <h2>Keyboard Shortcuts</h2>
+      <ul>
+        <li><strong>Alt+Shift+A</strong> - Toggle screen reader</li>
+        <li><strong>Tab</strong> - Navigate through interactive elements</li>
+        <li><strong>Arrow Up/Down</strong> - Navigate with screen reader</li>
+        <li><strong>Space/Enter</strong> - Activate focused element</li>
+        <li><strong>Alt+H</strong> - Read headings</li>
+        <li><strong>Alt+L</strong> - Read landmarks</li>
+        <li><strong>Escape</strong> - Stop reading</li>
+      </ul>
+      <button id="closeHelp" class="btn secondary">Close</button>
+    </div>
+  </dialog>
+
+  <script src="popup.js"></script>
+</body>
+</html> 
