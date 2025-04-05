@@ -145,9 +145,23 @@ function setupEventListeners() {
 
 // Restore default settings
 function restoreDefaults() {
+  // Reset current settings to defaults
   currentSettings = { ...defaultSettings };
+  
+  // Update UI with default values
   updateUI();
-  showNotification('Default settings restored');
+  
+  // Save default settings to storage
+  chrome.runtime.sendMessage({
+    action: 'updateSettings',
+    settings: currentSettings
+  }, (response) => {
+    if (response && response.success) {
+      showNotification('Default settings restored and saved');
+    } else {
+      showNotification('Failed to save default settings');
+    }
+  });
 }
 
 // Save settings
