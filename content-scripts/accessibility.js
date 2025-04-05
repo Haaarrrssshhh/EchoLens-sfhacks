@@ -159,12 +159,6 @@ class EchoLensAccessibility {
         this.readHeadings();
       }
 
-      // Alt+L or Option+L to read landmarks
-      else if (altKey && (event.key === 'l' || event.key === 'L')) {
-        event.preventDefault();
-        this.readLandmarks();
-      }
-
       // Alt+P or Option+P to read paragraphs
       else if (altKey && (event.key === 'p' || event.key === 'P')) {
         event.preventDefault();
@@ -719,43 +713,6 @@ class EchoLensAccessibility {
     this.processReadingQueue();
   }
 
-  // Read all landmarks on the page
-  readLandmarks() {
-    // First stop any ongoing reading
-    this.stopReading();
-
-    const landmarks = document.querySelectorAll(
-      'header, footer, main, nav, aside, section[aria-label], section[aria-labelledby], [role="banner"], [role="contentinfo"], [role="main"], [role="navigation"], [role="complementary"], [role="search"], [role="region"][aria-label], [role="region"][aria-labelledby]'
-    );
-
-    if (landmarks.length === 0) {
-      this.announceMessage("No landmarks found");
-      return;
-    }
-
-    this.readingQueue = Array.from(landmarks).map(landmark => {
-      let type = landmark.tagName.toLowerCase();
-      if (landmark.hasAttribute('role')) {
-        type = landmark.getAttribute('role');
-      }
-
-      let name = landmark.getAttribute('aria-label') || '';
-      const labelledby = landmark.getAttribute('aria-labelledby');
-      if (labelledby) {
-        const labelElement = document.getElementById(labelledby);
-        if (labelElement) {
-          name = labelElement.textContent.trim();
-        }
-      }
-
-      return `${type} landmark${name ? ': ' + name : ''}`;
-    });
-
-    this.announceMessage(`${landmarks.length} landmarks found`);
-    this.isReading = true;
-    this.processReadingQueue();
-  }
-
   // Read all images on the page
   readImages() {
     // First stop any ongoing reading
@@ -844,9 +801,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
   } else if (message.action === 'readHeadings') {
     echoLens.readHeadings();
-    sendResponse({ success: true });
-  } else if (message.action === 'readLandmarks') {
-    echoLens.readLandmarks();
     sendResponse({ success: true });
   } else if (message.action === 'readAllText') {
     echoLens.readAllText();

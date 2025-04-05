@@ -6,7 +6,7 @@ EchoLens is a browser extension designed to enhance web accessibility for users 
 
 - **Screen Reading**: Converts text to speech with customizable voice settings
 - **Keyboard Navigation**: Enhanced keyboard shortcuts for efficient navigation
-- **Semantic Structure Recognition**: Identifies headings, landmarks, and content structure
+- **Semantic Structure Recognition**: Identifies headings and content structure
 - **ARIA Support**: Full support for ARIA roles and attributes
 - **High Contrast Mode**: Adjustable contrast and color settings
 - **Text Customization**: Font size, spacing, and style adjustments

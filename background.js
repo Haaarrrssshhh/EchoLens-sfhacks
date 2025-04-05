@@ -67,9 +67,6 @@ function registerKeyboardCommands() {
       case 'read_headings':
         chrome.tabs.sendMessage(activeTab.id, { action: 'readHeadings' });
         break;
-      case 'read_landmarks':
-        chrome.tabs.sendMessage(activeTab.id, { action: 'readLandmarks' });
-        break;
       case 'read_paragraphs':
         chrome.tabs.sendMessage(activeTab.id, { action: 'readParagraphs' });
         break;

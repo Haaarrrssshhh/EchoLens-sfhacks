@@ -95,12 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.tabs.sendMessage(tab.id, { action: 'readHeadings' });
   });
   
-  // Read landmarks button click event
-  document.getElementById('read-landmarks').addEventListener('click', async function() {
-    const tab = await getCurrentTab();
-    chrome.tabs.sendMessage(tab.id, { action: 'readLandmarks' });
-  });
-  
   // Read paragraphs button click event
   document.getElementById('read-paragraphs').addEventListener('click', async function() {
     const tab = await getCurrentTab();
