@@ -90,12 +90,11 @@ class EchoLensAccessibility {
     if (event.altKey && event.shiftKey && event.key === 'A') {
       event.preventDefault();
       this.toggleScreenReader();
+      return;
     }
     
     // If screen reader is active
     if (this.isActive) {
-      // Tab navigation handled separately to preserve normal browsing
-      
       // Up/Down for navigation between interactive elements
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -123,12 +122,47 @@ class EchoLensAccessibility {
         this.readLandmarks();
       }
       
+      // Alt+T to read all visible text on the page
+      else if (event.altKey && event.key === 't') {
+        event.preventDefault();
+        this.readAllText();
+      }
+      
+      // "G" key to call the placeholder function
+      else if (event.key.toLowerCase() === 'g') {
+        event.preventDefault();
+        this.handleGKey();
+      }
+      
       // Escape to stop reading
       else if (event.key === 'Escape') {
         event.preventDefault();
         this.stopReading();
       }
     }
+  }
+
+  // Placeholder function for the "G" key event with visual feedback
+  handleGKey() {
+    // Create a div element to show a visual indicator
+    const feedback = document.createElement('div');
+    feedback.textContent = "G key pressed!";
+    feedback.style.position = "fixed";
+    feedback.style.top = "10px";
+    feedback.style.right = "10px";
+    feedback.style.backgroundColor = "#FF4081";
+    feedback.style.color = "#FFF";
+    feedback.style.padding = "10px";
+    feedback.style.borderRadius = "5px";
+    feedback.style.zIndex = "9999";
+    feedback.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+    document.body.appendChild(feedback);
+    
+    // Remove the feedback after 2 seconds
+    setTimeout(() => feedback.remove(), 2000);
+    
+    // Optionally, announce message via TTS (or any other action)
+    this.announceMessage("G key pressed - visual indicator shown");
   }
 
   // Toggle screen reader functionality
@@ -148,7 +182,7 @@ class EchoLensAccessibility {
   scanPageElements() {
     // Find all interactive elements
     this.interactiveElements = Array.from(document.querySelectorAll(
-      'a, button, input, select, textarea, [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex]'
+      'a, button, input, select, textarea, [role="button"], [role="p"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"], [tabindex]'
     )).filter(el => {
       // Filter out hidden elements
       const style = window.getComputedStyle(el);
@@ -364,6 +398,19 @@ class EchoLensAccessibility {
     this.processReadingQueue();
   }
 
+  // Read all visible text on the page
+  readAllText() {
+    // Get all visible text from the body element
+    const allVisibleText = document.body.innerText;
+    if (!allVisibleText.trim()) {
+      this.announceMessage("No text found on this page");
+      return;
+    }
+    // You might want to split or chunk the text if it's very long,
+    // but for simplicity, we'll announce it all at once.
+    this.announceMessage(allVisibleText);
+  }
+
   // Process the reading queue
   processReadingQueue() {
     if (this.readingQueue.length > 0) {
@@ -413,9 +460,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'readLandmarks') {
     echoLens.readLandmarks();
     sendResponse({ success: true });
+  } else if (message.action === 'readAllText') {
+    echoLens.readAllText();
+    sendResponse({ success: true });
   } else if (message.action === 'stopReading') {
     echoLens.stopReading();
     sendResponse({ success: true });
   }
   return true; // Required for async response
-}); 
+});
