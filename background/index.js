@@ -95,18 +95,17 @@ function speak(text, options = {}, callback, lang = "English") {
   isSpeaking = true;
 
   const languageMap = {
-    English: { langCode: "en-US", voiceName: "Google US English" },
-    Hindi: { langCode: "hi-IN", voiceName: "Google हिन्दी" },
-    Chinese: { langCode: "zh-CN", voiceName: "Google 中文（普通话）" },
-    French: { langCode: "fr-FR", voiceName: "Google français" },
-    Spanish: { langCode: "es-ES", voiceName: "Google español" }
+    English: { langCode: "en-US" },
+    Hindi: { langCode: "hi-IN" },
+    Chinese: { langCode: "zh-CN" },
+    French: { langCode: "fr-FR" },
+    Spanish: { langCode: "es-ES" }
   };
 
   const selected = languageMap[lang] || languageMap["English"];
 
   const ttsOptionsBase = {
     lang: selected.langCode,
-    voiceName: selected.voiceName,
     rate: options.rate || 1.0,
     pitch: options.pitch || 1.0,
     volume: options.volume || 1.0
