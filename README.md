@@ -5,9 +5,12 @@
 ---
 ## 📽️ Demo Video
 
-[![Watch the demo](/assets/gemini.png)](https://www.youtube.com/watch?v=FgG57u78ZcI&t=3s)
-
----
+<p align="center">
+<a href="https://www.youtube.com/watch?v=FgG57u78ZcI" target="_blank">
+  <img src="./images/EchoLense1.png" 
+  height=700 alt="Watch the demo video"/>
+</a>
+</p>
 
 ## 🚀 Features
 
@@ -77,7 +80,7 @@
    ```bash
    npm run build
    ```
-   
+
 5. Load into Chrome:
 - Visit chrome://extensions
 - Enable Developer Mode
