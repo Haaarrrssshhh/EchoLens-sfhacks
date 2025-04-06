@@ -2,7 +2,6 @@
 
 Echo Lens was born out of a desire to make digital content more accessible, especially for people in developing countries where standard accessibility guidelines might not always be enforced. The idea was inspired by a close friend who, despite acquiring visual impairment at a young age, never allowed it to hinder his achievements, from winning Olympiads to excelling academically and even exploring creative pursuits like standup comedy. His journey highlighted both the potential of assistive technologies and the limitations of existing screen reading software. This project aims to fill those gaps by not only providing text-to-speech capabilities but also by introducing innovative features like image recognition and multilingual summaries to help users get the essence of long-form content quickly.
 
----
 
 ## What it does
 
@@ -14,7 +13,6 @@ Echo Lens is a Chrome extension designed to transform how users interact with di
 
 This combination of features is particularly useful for developers and general users alike, especially in regions where access to high-quality assistive technology is limited.
 
----
 
 ## How we built it
 
@@ -25,7 +23,6 @@ We built Echo Lens as a browser extension using modern web technologies. The pro
 
 Our development process was agile and iterative. We started with core functionality and gradually integrated advanced features based on user feedback and emerging research in accessibility technologies. The open-source nature of the project on GitHub allowed for community contributions, further enriching the project.
 
----
 
 ## Challenges we ran into
 
@@ -34,7 +31,6 @@ Developing Echo Lens wasn't without its hurdles. Some of the major challenges in
 - **Multilingual Complexity:** Implementing seamless multilingual support required extensive testing and calibration. Ensuring that translations maintained the nuance and accuracy of the original content was a non-trivial task.
 - **Accessibility Standards:** With accessibility being a central focus, we had to ensure that our tool met high standards and worked reliably across diverse user scenarios. This meant rigorous user testing and iterating on feedback, particularly from users in developing regions where accessibility tools are scarce.
 
----
 
 ## What we learned
 
@@ -44,7 +40,6 @@ Through building Echo Lens, we gained valuable insights:
 - **Collaboration Fuels Innovation:** Open-source contributions enriched the project, offering diverse perspectives that helped us address unique challenges, especially in multilingual and image processing domains.
 - **Accessibility is a Global Need:** Our work underscored how critical it is to develop tools that serve communities in developing countries, where access to cutting-edge assistive technologies is limited.
 
----
 
 ## What's next for Echo Lens
 
@@ -55,5 +50,3 @@ Looking forward, there are exciting opportunities to expand Echo Lens:
 - **Integration with Other Platforms:** Beyond Chrome, exploring compatibility with other browsers and platforms could widen our reach and impact, further supporting those who need accessible technology the most.
 
 Echo Lens represents our commitment to innovation in accessibility, and we’re excited about the journey ahead. Whether you're a developer eager to contribute or a user in need of better screen reading tools, we invite you to join us in shaping the future of digital accessibility.
-
----
