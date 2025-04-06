@@ -3,14 +3,18 @@
 **Echo Lens** is an AI-enhanced browser extension designed to empower users who are blind or have low vision by making web browsing more inclusive, intelligent, and effortless. With robust screen reading, smart image transcription using Gemini, and keyboard-first navigation, Echo Lens delivers an enhanced accessible experience on any webpage.
 
 ---
-## 📽️ Demo Video
+## 🖼️ Screenshots
 
-<p align="center">
-<a href="https://www.youtube.com/watch?v=FgG57u78ZcI" target="_blank">
-  <img src="./images/EchoLense1.png" 
-  height=700 alt="Watch the demo video"/>
-</a>
-</p>
+<div align="center">
+  <img src="./assets/Echo Lens - Popup.png"
+  width=31% alt="Watch the demo video"/>
+  <img src="./assets/Echo Lens - Language Dropdown.png"
+  width=31% alt="Watch the demo video"/>
+  <img src="./assets/Echo Lens - Shortcuts.png"
+  width=31% alt="Watch the demo video"/>
+</div>
+<p style="center">
+
 
 ## 🚀 Features
 
@@ -48,13 +52,13 @@
 
 ## 🧰 Tech Stack
 
-| Layer | Technologies |
-|-------|--------------|
-| Frontend | JavaScript, HTML, CSS |
-| Extension APIs | Web Extension API (Manifest v3) |
-| Accessibility | Web Speech API, ARIA, Keyboard Events |
-| AI Backend |  Gemini Pro Vision API |
-| Image Support | Base64 / Blob image data for Gemini |
+| Layer          | Technologies                          |
+| -------------- | ------------------------------------- |
+| Frontend       | JavaScript, HTML, CSS                 |
+| Extension APIs | Web Extension API (Manifest v3)       |
+| Accessibility  | Web Speech API, ARIA, Keyboard Events |
+| AI Backend     | Gemini Pro Vision API                 |
+| Image Support  | Base64 / Blob image data for Gemini   |
 
 ---
 
