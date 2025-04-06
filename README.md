@@ -15,6 +15,14 @@
 </div>
 <p style="center">
 
+## 📽️ Demo Video
+
+<p align="center">
+<a href="https://www.youtube.com/watch?v=8F6ZXqoSkbs" target="_blank">
+  <img src="./images/EchoLense1.png" 
+  height=700 alt="Watch the demo video"/>
+</a>
+</p>
 
 ## 🚀 Features
 
