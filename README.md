@@ -1,6 +1,6 @@
-# 🔊 EchoLens – Accessibility Browser Extension
+# 🔊 Echo Lens – Accessibility Browser Extension
 
-**EchoLens** is an AI-enhanced browser extension designed to empower users who are blind or have low vision by making web browsing more inclusive, intelligent, and effortless. With robust screen reading, smart image transcription using Gemini, and keyboard-first navigation, EchoLens delivers an enhanced accessible experience on any webpage.
+**Echo Lens** is an AI-enhanced browser extension designed to empower users who are blind or have low vision by making web browsing more inclusive, intelligent, and effortless. With robust screen reading, smart image transcription using Gemini, and keyboard-first navigation, Echo Lens delivers an enhanced accessible experience on any webpage.
 
 ---
 ## 📽️ Demo Video
